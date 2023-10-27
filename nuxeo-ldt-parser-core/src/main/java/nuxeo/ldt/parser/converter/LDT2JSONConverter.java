@@ -26,6 +26,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 
 import nuxeo.ldt.parser.service.LDTParser;
 import nuxeo.ldt.parser.service.LDTParserService;
+import nuxeo.ldt.parser.service.elements.Record;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -67,7 +68,7 @@ public class LDT2JSONConverter implements Converter {
         long recordSize = Long.parseLong(recordSizeStr);
 
         LDTParser parser = Framework.getService(LDTParserService.class).getParser(parserName);
-        LDTParser.Record record = parser.getRecord(blobHolder.getBlob(), startOffset, recordSize);
+        Record record = parser.getRecord(blobHolder.getBlob(), startOffset, recordSize);
 
         try {
             ObjectMapper objectMapper = new ObjectMapper();

@@ -29,8 +29,6 @@ import org.nuxeo.runtime.test.runner.FeaturesRunner;
 import org.nuxeo.runtime.test.runner.TransactionalFeature;
 
 import nuxeo.ldt.parser.service.LDTParser;
-import nuxeo.ldt.parser.service.LDTParser.Item;
-import nuxeo.ldt.parser.service.LDTParser.Record;
 import nuxeo.ldt.parser.test.SimpleFeatureCustom;
 
 /**

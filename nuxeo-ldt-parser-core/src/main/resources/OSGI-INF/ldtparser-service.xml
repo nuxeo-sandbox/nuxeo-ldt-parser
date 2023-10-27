@@ -138,7 +138,7 @@
 			in lines 1-2. Make sure to use the exact same field names-->
 			<!-- WARNING - WARNING - WARNING - WARNING - WARNING -->
 			<!-- All fields are supposed to be String, no conversion is made -->
-			<recordFields>
+			<recordFieldsMapping>
 				<!-- Example:
 				<field xpath="statement:clientId">clientId</field>
 				<field xpath="statement:taxId">taxId</field>
@@ -151,7 +151,7 @@
 				<field xpath="dc:format">taxId</field>
 				<field xpath="dc:source">month</field>
 				<field xpath="dc:rights">year</field>
-			</recordFields>
+			</recordFieldsMapping>
 			<!-- Records are created in a Folder at same level than the source
 			LDT document. This should be changed later with mmore configuration-->
 			<!--

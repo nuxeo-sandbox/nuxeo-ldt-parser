@@ -28,7 +28,7 @@ import org.nuxeo.common.utils.FileUtils;
 import org.nuxeo.ecm.core.api.Blob;
 import org.nuxeo.ecm.core.api.impl.blob.FileBlob;
 
-import nuxeo.ldt.parser.service.LDTParser.Record;
+import nuxeo.ldt.parser.service.elements.Record;
 
 /**
  * WARNING: The misc test files with .ldt data have content that is specially tested here, like

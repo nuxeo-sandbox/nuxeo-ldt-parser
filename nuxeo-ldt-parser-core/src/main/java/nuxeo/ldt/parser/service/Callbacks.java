@@ -18,7 +18,7 @@
  */
 package nuxeo.ldt.parser.service;
 
-import nuxeo.ldt.parser.service.LDTParser.Item;
+import nuxeo.ldt.parser.service.elements.Item;
 
 /**
  * 

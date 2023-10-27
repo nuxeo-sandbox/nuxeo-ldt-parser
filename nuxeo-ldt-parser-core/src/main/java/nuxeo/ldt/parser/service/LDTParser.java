@@ -20,14 +20,15 @@
 
 package nuxeo.ldt.parser.service;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonRootName;
-import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import nuxeo.ldt.parser.service.elements.Item;
+import nuxeo.ldt.parser.service.elements.MainLine;
+import nuxeo.ldt.parser.service.elements.Record;
+import nuxeo.ldt.parser.service.elements.RecordInfo;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
@@ -432,7 +433,6 @@ public class LDTParser {
         }
 
         long recordSize = totalBytesRead - recordStart;
-
         RecordInfo recInfo = new RecordInfo(recordStart, recordSize, lineStart, firstLine, secondLine);
 
         return recInfo;
@@ -444,7 +444,11 @@ public class LDTParser {
      * Update inputLdtDoc with LDT info
      * Records are created at the same level than the LDT itself, in folder whose title is the title of the LDT +
      * config.recordsContainerSuffix
-     * Each record is filled with the retrieval info (start offset, size, line start)
+     * Each record:
+     * - Is created as a recordDocType document tyoe (LDTRecord by default)
+     * - Is filled with the retrieval info (start offset, size, line start) in the ldtrecord schema
+     * - And possibly with any field defined in the recordFieldsMapping mapping.
+     * - The dc-title is set to recordTitleFields
      * Caller is in charge of making sure permissions allow for creating content.
      * <br>
      * <b>WARNING</b>: Assume the file is UTF-8, even pure ASCII (no multibytes char)
@@ -524,7 +528,7 @@ public class LDTParser {
                         title += "-" + record.getValue(config.getRecordTitleFields().get(i));
                     }
                 } else {
-                    title = inputLdtDoc.getTitle() + "-" + inputLdtDoc + 1;
+                    title = inputLdtDoc.getTitle() + "-" + countRecords + 1;
                 }
 
                 DocumentModel recordDoc = session.createDocumentModel(parentPath, title, config.getRecordDocType());
@@ -532,8 +536,8 @@ public class LDTParser {
                 recordDoc.setPropertyValue(Constants.XPATH_LDTRECORD_STARTOFFSET, record.startOffset);
                 recordDoc.setPropertyValue(Constants.XPATH_LDTRECORD_RECORDSIZE, record.size);
                 recordDoc.setPropertyValue(Constants.XPATH_LDTRECORD_STARTLINE, record.startLine);
-                if (config.getRecordFields() != null) {
-                    for (Map.Entry<String, String> xpathField : config.getRecordFields().entrySet()) {
+                if (config.getRecordFieldsMapping() != null) {
+                    for (Map.Entry<String, String> xpathField : config.getRecordFieldsMapping().entrySet()) {
                         String fieldInMap = xpathField.getValue();
                         String fieldValue = record.getValue(fieldInMap);
                         recordDoc.setPropertyValue(xpathField.getKey(), fieldValue);
@@ -620,44 +624,6 @@ public class LDTParser {
         return jsonObject.toString();
     }
 
-    public static class MainLine {
-
-        public List<String> fieldList;
-
-        public Map<String, String> fieldsAndValues;
-
-        public MainLine(Matcher m, List<String> fieldList) {
-
-            if (m.groupCount() != fieldList.size()) {
-                throw new NuxeoException(String.format(
-                        "Count of captured groups (%d) should be equal to the number of fields set in the configuration (%d)",
-                        m.groupCount(), fieldList.size()));
-            }
-
-            this.fieldList = fieldList;
-            fieldsAndValues = new HashMap<String, String>();
-            for (int i = 0; i < fieldList.size(); i++) {
-                fieldsAndValues.put(fieldList.get(i), m.group(i + 1).trim());
-            }
-        }
-
-        public String getValue(String fieldName) {
-
-            return fieldsAndValues.get(fieldName);
-        }
-
-        public String toString() {
-            ObjectMapper objectMapper = new ObjectMapper();
-            String jsonString;
-            try {
-                jsonString = objectMapper.writeValueAsString(fieldsAndValues);
-            } catch (JsonProcessingException e) {
-                jsonString = "Error processing the fields to JSON";
-            }
-            return jsonString;
-        }
-    }
-
     public static class LDTInfo {
 
         public int countRecords = 0;
@@ -665,177 +631,6 @@ public class LDTParser {
         public LDTInfo(int countRecords) {
             this.countRecords = countRecords;
         }
-    }
-
-    public static class RecordInfo {
-
-        public long startOffset;
-
-        public long size;
-
-        public long startLine;
-
-        public MainLine line1;
-
-        public MainLine line2;
-
-        public RecordInfo(long startOffset, long size, long startLine, MainLine line1, MainLine line2) {
-
-            this.startOffset = startOffset;
-            this.size = size;
-            this.startLine = startLine;
-            this.line1 = line1;
-            this.line2 = line2;
-        }
-
-        public String toString() {
-
-            String str = "{";
-            str += "\"startOffset\": " + startOffset + ",";
-            str += "\"size\": " + size + ",";
-            str += "\"line1\": \"" + line1.toString() + "\",";
-            str += "\"line2\": \"" + line2.toString() + "\"";
-            str += "}";
-
-            return str;
-        }
-
-        public String getValue(String key) {
-            String value = line1.fieldsAndValues.get(key);
-            if (value == null) {
-                value = line2.fieldsAndValues.get(key);
-            }
-
-            return value;
-        }
-
-    }
-
-    public static class Item {
-
-        protected String line;
-
-        protected String type = null;
-
-        protected List<String> fieldList = null;
-
-        protected Map<String, String> fieldsAndValues = null;
-
-        public Item(String line, String type, List<String> fieldList, Map<String, String> fieldsAndValues) {
-            this.line = line;
-            this.type = type;
-            this.fieldList = fieldList;
-            this.fieldsAndValues = fieldsAndValues;
-        }
-
-        public Item(String line, LDTParserDescriptor config) {
-            this.line = line;
-
-            LDTItemDescriptor[] itemsDesc = config.getItems();
-            for (LDTItemDescriptor oneDesc : itemsDesc) {
-                // log.info("Testing with " + oneDesc.getType() + "...");
-                Matcher m = oneDesc.getPattern().matcher(line);
-                if (m.matches()) {
-                    //System.out.println("NEW ITEM: <" + oneDesc.getType() + ">");
-                    type = oneDesc.getType();
-                    fieldList = oneDesc.getFields();
-                    if (m.groupCount() != fieldList.size()) {
-                        throw new NuxeoException(String.format(
-                                "Count of captured groups (%d) should be equal to the number of fields set in the configuration (%d) for line <%s>",
-                                m.groupCount(), fieldList.size(), line));
-                    }
-                    fieldsAndValues = new HashMap<String, String>();
-                    for (int i = 0; i < fieldList.size(); i++) {
-                        if (!Constants.IGNORE_ITEM_FIELD_TAG.equals(fieldList.get(i))) {
-                            fieldsAndValues.put(fieldList.get(i), m.group(i + 1).trim());
-                        }
-                    }
-                    break;
-                }
-            }
-
-            if (fieldsAndValues == null) {
-                // throw new NuxeoException("No item descriptor found matching the line <" + line + ">");
-                log.warn("No item descriptor found matching the line <" + line + ">");
-            }
-
-        }
-
-        public String toString() {
-            return line;
-        }
-
-        public String getLine() {
-            return line;
-        }
-
-        public String getType() {
-            return type;
-        }
-
-        public List<String> getFields() {
-            return fieldList;
-        }
-
-        public Map<String, String> getFieldsAndValues() {
-            return fieldsAndValues;
-        }
-
-        public String getValue(String field) {
-            if (fieldsAndValues != null) {
-                return fieldsAndValues.get(field);
-            }
-
-            return null;
-        }
-    }
-
-    @JsonRootName(value = "record")
-    public static class Record {
-
-        @JsonProperty("line1")
-        protected MainLine line1;
-
-        @JsonProperty("line2")
-        protected MainLine line2;
-
-        @JsonProperty("items")
-        protected List<Item> items;
-
-        public Record(MainLine line1, MainLine line2, List<Item> items) {
-            this.line1 = line1;
-            this.line2 = line2;
-            this.items = items;
-        }
-
-        public String toJson() throws JacksonException {
-            // @TODO - tune all this, allows for sending a "proper" json, not all in a raw
-            ObjectMapper objectMapper = new ObjectMapper();
-            objectMapper.configure(SerializationFeature.WRAP_ROOT_VALUE, true);
-            String json = objectMapper.writeValueAsString(this);
-
-            return json;
-        }
-
-        public String getMainLinesValue(String key) {
-
-            String value = null;
-
-            if (line1 != null) {
-                value = line1.getValue(key);
-            }
-
-            if (value == null && line2 != null) {
-                value = line2.getValue(key);
-            }
-
-            return value;
-        }
-
-        public List<Item> getItems() {
-            return items;
-        }
-
     }
 
 }

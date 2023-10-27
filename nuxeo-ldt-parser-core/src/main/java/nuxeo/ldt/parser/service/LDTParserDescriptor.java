@@ -89,8 +89,8 @@ public class LDTParserDescriptor {
     @XNode("recordDocType")
     protected String recordDocType = null;
     
-    @XNodeMap(value = "recordFields/field", key = "@xpath", type = HashMap.class, componentType = String.class)
-    protected Map<String, String> recordFields = new HashMap<>();
+    @XNodeMap(value = "recordFieldsMapping/field", key = "@xpath", type = HashMap.class, componentType = String.class)
+    protected Map<String, String> recordFieldsMapping = new HashMap<>();
     
     @XNode("recordsContainerDocType")
     protected String recordsContainerDocType = null;
@@ -179,21 +179,6 @@ public class LDTParserDescriptor {
         return items;
     }
     
-    /**
-     * Concatenate the list of 2 fields, return only the keys
-     * 
-     * @return the list of fields. If none was defined, returns an empty list (nont null)
-     * @since TODO
-     */
-    public List<String> getLDTRecordXPaths() {
-        
-        if(recordFields != null) {
-            return new ArrayList<String>(recordFields.keySet());
-        }
-        
-        return new ArrayList<String>();
-    }
-    
     public boolean ignoreMalformedLines() {
         return ignoreMalformedLines.booleanValue();
     }
@@ -217,8 +202,22 @@ public class LDTParserDescriptor {
         return recordDocType;
     }
     
-    public Map<String, String> getRecordFields() {
-        return recordFields;
+    public Map<String, String> getRecordFieldsMapping() {
+        return recordFieldsMapping;
+    }
+    
+    /**
+     * Concatenate the list of 2 fields, return only the keys
+     * 
+     * @return the list of fields. If none was defined, returns an empty list (nont null)
+     */
+    public List<String> getLDTRecordXPaths() {
+        
+        if(recordFieldsMapping != null) {
+            return new ArrayList<String>(recordFieldsMapping.keySet());
+        }
+        
+        return new ArrayList<String>();
     }
     
     public String getRecordsContainerDocType() {

@@ -30,8 +30,10 @@ import nuxeo.ldt.parser.service.Callbacks;
 import nuxeo.ldt.parser.service.LDTParser;
 import nuxeo.ldt.parser.service.LDTParserDescriptor;
 import nuxeo.ldt.parser.service.LDTParserService;
+import nuxeo.ldt.parser.service.elements.Item;
+import nuxeo.ldt.parser.service.elements.MainLine;
+import nuxeo.ldt.parser.service.elements.Record;
 import nuxeo.ldt.parser.test.TestUtils;
-import nuxeo.ldt.parser.service.LDTParser.Item;
 
 import org.junit.Assert;
 import org.junit.Ignore;
@@ -102,7 +104,7 @@ public class TestLDTParser {
         String line = "$12345ABCD$    TYPE=BANK0003  CLIENT TYPE: F     TAX ID: 12345678901567    CLIENT ID: 9874567890ABC12";
 
         LDTParser parser = ldtParserService.getParser(null);
-        LDTParser.MainLine parsedLine = parser.parseRecordFirstLine(line);
+        MainLine parsedLine = parser.parseRecordFirstLine(line);
         assertEquals("BANK0003", parsedLine.getValue("bankType"));
         assertEquals("F", parsedLine.getValue("clientType"));
         assertEquals("12345678901567", parsedLine.getValue("taxId"));
@@ -117,14 +119,14 @@ public class TestLDTParser {
 
         LDTParser parser = ldtParserService.getParser(null);
         @SuppressWarnings("unused")
-        LDTParser.MainLine parsedLine = parser.parseRecordFirstLine(line);
+        MainLine parsedLine = parser.parseRecordFirstLine(line);
     }
 
     @Test
     public void testParseSecondLine() {
         String line = "003090         Ah Que Coucou             MARCH-2023      098765000";
         LDTParser parser = ldtParserService.getParser(null);
-        LDTParser.MainLine parsedLine = parser.parseRecordSecondLine(line);
+        MainLine parsedLine = parser.parseRecordSecondLine(line);
         assertEquals("003090", parsedLine.getValue("bankId"));
         assertEquals("Ah Que Coucou", parsedLine.getValue("clientName"));
         assertEquals("MARCH", parsedLine.getValue("month"));
@@ -142,7 +144,7 @@ public class TestLDTParser {
 
         // Ignore malformed line
         desc.setIgnoreMalformedLines(true);
-        LDTParser.MainLine parsedLine = parser.parseRecordSecondLine(line);
+        MainLine parsedLine = parser.parseRecordSecondLine(line);
         assertNull(parsedLine);
 
         // Throw NuxeoException
@@ -173,7 +175,7 @@ public class TestLDTParser {
     protected void testParseBalanceItem(String line, String type, String lineCode, String date, String amout) {
 
         LDTParser parser = ldtParserService.getParser(null);
-        LDTParser.Item item = parser.parseItem(line);
+        Item item = parser.parseItem(line);
 
         assertNotNull(item);
         assertEquals(type, item.getType());
@@ -208,7 +210,7 @@ public class TestLDTParser {
         String line = "2   01/03     KT11 IS78 IS78                499.95-          MQ47";
 
         LDTParser parser = ldtParserService.getParser(null);
-        LDTParser.Item item = parser.parseItem(line);
+        Item item = parser.parseItem(line);
 
         assertNotNull(item);
         assertEquals("ItemLine", item.getType());
@@ -251,7 +253,7 @@ public class TestLDTParser {
         List<String> lines = List.of(source.split("\n"));
 
         LDTParser parser = ldtParserService.getParser(null);
-        LDTParser.Record record = parser.parseRecord(lines);
+        Record record = parser.parseRecord(lines);
 
         assertNotNull(record);
         assertEquals("BANK0003", record.getMainLinesValue("bankType"));
@@ -272,7 +274,7 @@ public class TestLDTParser {
     public void testGetRecordSuccess() {
         Blob blob = TestUtils.getSimpleTestFileBlob();
         LDTParser parser = ldtParserService.getParser(null);
-        LDTParser.Record record = parser.getRecord(blob, TestUtils.SIMPLELDT_RECORD2_STARTOFFSET,
+        Record record = parser.getRecord(blob, TestUtils.SIMPLELDT_RECORD2_STARTOFFSET,
                 TestUtils.SIMPLELDT_RECORD2_RECORDSIZE);
         
         TestUtils.checkSimpleTestFileRecord2Values(record);
@@ -283,7 +285,7 @@ public class TestLDTParser {
         
         Blob blob = TestUtils.getSimpleTestFileBlob();
         LDTParser parser = ldtParserService.getParser(null);
-        LDTParser.Record record = parser.getRecord(blob, 90000000, 10000);
+        Record record = parser.getRecord(blob, 90000000, 10000);
         Assert.assertNull(record);
     }
 
@@ -292,7 +294,7 @@ public class TestLDTParser {
         
         Blob blob = TestUtils.getSimpleTestFileBlob();
         LDTParser parser = ldtParserService.getParser(null);
-        LDTParser.Record record = parser.getRecord(blob, TestUtils.SIMPLELDT_RECORD2_STARTOFFSET,
+        Record record = parser.getRecord(blob, TestUtils.SIMPLELDT_RECORD2_STARTOFFSET,
                 TestUtils.SIMPLELDT_RECORD2_RECORDSIZE);
         
         assertNotNull(record);
