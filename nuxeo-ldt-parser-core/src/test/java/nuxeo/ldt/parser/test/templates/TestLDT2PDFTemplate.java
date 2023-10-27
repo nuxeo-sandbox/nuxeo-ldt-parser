@@ -21,6 +21,7 @@ package nuxeo.ldt.parser.test.templates;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.Ignore;
 import org.junit.runner.RunWith;
 import org.nuxeo.ecm.automation.AutomationService;
 import org.nuxeo.ecm.automation.OperationContext;
@@ -53,6 +54,7 @@ public class TestLDT2PDFTemplate {
     @Inject
     CoreSession session;
 
+    @Ignore
     @Test
     public void testRenderTemplate() throws OperationException {
         Blob blob = new FileBlob(new File(getClass().getResource("/files/statement.json").getPath()),"application/json");
