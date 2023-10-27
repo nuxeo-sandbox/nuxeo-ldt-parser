@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<component name="nuxeo.bi.templates">
+
+    <extension target="org.nuxeo.runtime.services.resource.ResourceService" point="resources">
+        <resource name="StatementTemplate">data/templates/bank_statement.html</resource>
+    </extension>
+
+</component>

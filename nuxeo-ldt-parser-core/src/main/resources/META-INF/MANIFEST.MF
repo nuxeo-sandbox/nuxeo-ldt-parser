@@ -1,0 +1,15 @@
+Bundle-ActivationPolicy: lazy
+Bundle-ClassPath: .
+Manifest-Version: 1.0
+Bundle-Vendor: nuxeo.bi
+Bundle-Version: 1.0.0
+Bundle-Name: nuxeo-bi-core
+Bundle-ManifestVersion: 2
+Bundle-SymbolicName: nuxeo.ldt.parser.nuxeo-ldt-parser-core;singleton=true
+Nuxeo-Component: OSGI-INF/operations-contrib.xml,
+ OSGI-INF/converter-contrib.xml,
+ OSGI-INF/mimetypes-contrib.xml,
+ OSGI-INF/template-contrib.xml,
+ OSGI-INF/cli-contrib.xml,
+ OSGI-INF/schemas-doctypes-contrib.xml,
+ OSGI-INF/ldtparser-service.xml

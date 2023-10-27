@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<component name="nuxeo.bi.converters">
+
+    <extension target="org.nuxeo.ecm.core.convert.service.ConversionServiceImpl" point="converter">
+        <converter name="ldt2json" class="nuxeo.ldt.parser.converter.LDT2JSONConverter">
+            <sourceMimeType>application/ldt</sourceMimeType>
+            <destinationMimeType>application/json</destinationMimeType>
+        </converter>
+
+        <converter class="org.nuxeo.ecm.platform.convert.plugins.CommandLineConverter" name="html2pdf">
+            <sourceMimeType>text/html</sourceMimeType>
+            <destinationMimeType>application/pdf</destinationMimeType>
+            <parameters>
+                <parameter name="CommandLineName">wkhtmlToPdf</parameter>
+            </parameters>
+        </converter>
+
+    </extension>
+
+</component>

@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<component name="nuxeo.bi.cli">
+
+    <require>org.nuxeo.ecm.platform.commandline.executor.service.defaultContrib</require>
+
+    <extension target="org.nuxeo.ecm.platform.commandline.executor.service.CommandLineExecutorComponent" point="command">
+        <command name="wkhtmlToPdf" enabled="true">
+            <commandLine>wkhtmltopdf</commandLine>
+            <parameterString>-q #{sourceFilePath} #{targetFilePath}</parameterString>
+            <installationDirective>You need to install wkhtmltopdf</installationDirective>
+        </command>
+    </extension>
+
+</component>

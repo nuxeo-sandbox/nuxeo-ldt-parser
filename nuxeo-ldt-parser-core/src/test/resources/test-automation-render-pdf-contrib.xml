@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<component name="nuxeo.ldt.parser.automationjs.test">
+
+    <extension target="org.nuxeo.automation.scripting.internals.AutomationScriptingComponent" point="operation">
+
+        <scriptedOperation id="javascript.test_render_pdf">
+            <inputType>blob</inputType>
+            <outputType>blob</outputType>
+            <category>javascript</category>
+            <description></description>
+            <script><![CDATA[function run(input, params) {
+
+                  var json = JSON.parse(input.getString());
+
+                  ctx.statement = json.statement;
+
+                  var dummyDoc = Session.createDocumentModel("/","File","File");
+
+                  var html = Render.Document(dummyDoc,{
+                    template: "template:StatementTemplate",
+                    filename: "statement.html",
+                    mimetype: "text/html",
+                    type: "ftl"
+                  });
+
+                  //Console.log(html.getString());
+
+                  return Blob.RunConverter(html, {
+                    'converter': 'html2pdf'
+                  });
+             }]]>
+            </script>
+        </scriptedOperation>
+
+    </extension>
+
+</component>

@@ -1,0 +1,187 @@
+<?xml version="1.0"?>
+<!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+     IMPORTANT
+     * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+     DO not format this file (do not select all/command-F because you
+     don't want lines to be added to your Regex patterns.-->
+<component name="nuxeo.ldt.parser.service.LDTParser">
+
+	<implementation class="nuxeo.ldt.parser.service.LDTParserServiceImpl" />
+
+	<service>
+		<provide interface="nuxeo.ldt.parser.service.LDTParserService" />
+	</service>
+
+	<extension-point name="ldtParser">
+		<object class="nuxeo.ldt.parser.service.LDTParserDescriptor" />
+	</extension-point>
+
+	<!-- Default contribution -->
+	<extension target="nuxeo.ldt.parser.service.LDTParser"
+		point="ldtParser">
+		<ldtParser>
+			<!-- This is the default parser. -->
+			<!-- WARNING: It is used here and there in unit test, do not change it -->
+			<!-- Which means, do not change it _here_, you can of course (and should) override it in your custom controbution. -->
+			<name>default</name>
+			<!-- Not used (yet)
+			<class>nuxeo.ldt.parser.service.LDTParser</class>
+			-->
+			<!-- ================================================== -->
+			<!-- PARSING -->
+			<!-- ================================================== -->
+			<!-- Values will be very specific to each implementation.
+                 These values are used in unit tests, mainly -->
+			<recordStartToken>$12345ABCD$</recordStartToken>
+			<recordEndToken>CLOSING BALANCE    </recordEndToken>
+			<!-- Example of first line -->
+			<!-- $12345ABCD$    TYPE=BANK0003  CLIENT TYPE: F     TAX ID: 12345678901234    CLIENT ID: 1234567890ABC12 -->
+			<!-- WARNING: Do not format this in eclipse (command-F), we don't want a line -->
+			<patternLine1>^\$12345ABCD\$ *TYPE=(BANK.{4}) *CLIENT TYPE: *([a-zA-Z]) *TAX ID: *([A-Z0-9]*) *CLIENT ID: *([A-Z0-9]*)</patternLine1>
+			<!-- MUST BE same order as the pattern groups captured above -->
+			<fieldsLine1>
+				<field>bankType</field>
+				<field>clientType</field>
+				<field>taxId</field>
+				<field>clientId</field>
+			</fieldsLine1>
+			<!-- Bank ID, Client Name, month-year, custom ref
+			     Example: 003090         John & Marie DOE          MARCH-2023      AB8765432
+			     So here we capture 5 groups -->
+			<patternLine2>^([A-Z0-9]*) *(.*?) *(JANUARY|FEBRUARY|MARCH|APRIL|MAY|JUNE|JULY|AUGUST|SEPTEMBER|OCTOBER|NOVEMBER|DECEMBER)-(\d{4}) *([A-Z0-9]*)</patternLine2>
+			<!-- MUST BE same order as the pattern groups -->
+			<fieldsLine2>
+				<field>bankId</field>
+				<field>clientName</field>
+				<field>month</field>
+				<field>year</field>
+				<field>customRef</field>
+			</fieldsLine2>
+			<!-- If ignoreMalformedLines is true, when parsing/regex fails, the
+			record is just ignored. Else, an error is thrown and the process
+			stops. -->
+			<ignoreMalformedLines>true</ignoreMalformedLines>
+			
+			<!-- If true, the parser does not parse items but calls the callbakc with the Callbacks#parseItem callback -->
+			<useCallbackForItems>false</useCallbackForItems>
+			<callbacksClass>nuxeo.ldt.parser.service.CallbacksExample</callbacksClass>
+			
+			<!-- In this default parser, we define lines for a bank statement -->
+			<itemLine>
+				<!-- 01/12     OPENING BALANCE   1234.65 -->
+				<type>OpeningBalance</type>
+				<pattern>^([0-9]*) *([0-9]{2}/[0-9]{2}) *OPENING BALANCE *([0-9]*.[0-9]{2}-?) *</pattern>
+				<fields>
+					<field>lineCode</field>
+					<field>date</field>
+					<field>amount</field>
+				</fields>
+			</itemLine>
+			
+			<itemLine>
+				<!-- 01/12     INTERMEDIATE BALANCE   1234.65 -->
+				<type>IntermediateBalance</type>
+				<pattern>^([0-9]*) *([0-9]{2}/[0-9]{2}) *INTERMEDIATE BALANCE *([0-9]*.[0-9]{2}-?) *</pattern>
+				<fields>
+					<field>lineCode</field>
+					<field>date</field>
+					<field>amount</field>
+				</fields>
+			</itemLine>
+			
+			<itemLine>
+				<!-- 01/12     PREVIOUS BALANCE   1234.65 -->
+				<type>PreviousBalance</type>
+				<pattern>^([0-9]*) *([0-9]{2}/[0-9]{2}) *PREVIOUS BALANCE *([0-9]*.[0-9]{2}-?) *</pattern>
+				<fields>
+					<field>lineCode</field>
+					<field>date</field>
+					<field>amount</field>
+				</fields>
+			</itemLine>
+			
+			<itemLine>
+				<!-- 01/12     CLOSING BALANCE   1234.65 -->
+				<type>ClosingBalance</type>
+				<pattern>^([0-9]*) *([0-9]{2}/[0-9]{2}) *CLOSING BALANCE *([0-9]*.[0-9]{2}-?) *</pattern>
+				<fields>
+					<field>lineCode</field>
+					<field>date</field>
+					<field>amount</field>
+				</fields>
+			</itemLine>
+			
+			<itemLine>
+				<!-- Credit: -->
+				<!-- 01/12     blah blah blah blah   1234.65     ABC123 -->
+				<!-- Debit: -->
+				<!-- 01/12     blah blah blah blah     12.70-    ABC123 -->
+				<type>ItemLine</type>
+				<pattern>^([0-9]*) *(\d{2}/\d{2}) *(.*?) *(\d+\.\d{2}-?) *([A-Z0-9]*)</pattern>
+				<fields>
+					<field>lineCode</field>
+					<field>date</field>
+					<field>label</field>
+					<field>amount</field>
+					<field>ref</field>
+				</fields>
+			</itemLine>
+
+			<!-- ================================================== -->
+			<!-- CREATING LDTRecords -->
+			<!-- ================================================== -->
+			<!-- The plugin deploys the LDTRecord doc type and facet. If you
+			use a custom one, make sure to add the "LDTRecord" facet (that comes with the
+			ldtrecord schema) -->
+			<recordDocType>LDTRecord</recordDocType>
+			<!-- You can map an XPATH from your custom recordDocType to a field
+			in lines 1-2. Make sure to use the exact same field names-->
+			<!-- WARNING - WARNING - WARNING - WARNING - WARNING -->
+			<!-- All fields are supposed to be String, no conversion is made -->
+			<recordFields>
+				<!-- Example:
+				<field xpath="statement:clientId">clientId</field>
+				<field xpath="statement:taxId">taxId</field>
+				<field xpath="statement:month">month</field>
+				<field xpath="statement:year">year</field>
+				-->
+				<!-- For default and used in unit test we use common fields that
+				don't have validation rules' -->
+				<field xpath="dc:description">clientId</field>
+				<field xpath="dc:format">taxId</field>
+				<field xpath="dc:source">month</field>
+				<field xpath="dc:rights">year</field>
+			</recordFields>
+			<!-- Records are created in a Folder at same level than the source
+			LDT document. This should be changed later with mmore configuration-->
+			<!--
+			<createRecordsContainerPath>SAME_AS_SOURCE_LDT_DOC</createRecordsContainerPath>
+			-->
+
+			<!-- DocType of the container holding the LDTRecords/recordDocType -->
+			<recordsContainerDocType>Folder</recordsContainerDocType>
+			
+			<!-- The recordsdContainer is created with the same name than the
+			source LDT, plus a suffix -->
+			<recordsContainerSuffix>-Records</recordsContainerSuffix>
+			
+			<!-- Title for each record document. Default will just be the source
+			LDT title + "-" + record number -->
+			<!-- fields must already existing among fieldsLine1/fieldsLine2
+			and will be concatenated with "-" -->
+			<!-- If this is not empty, it builds the title. Here, title will
+			would be {clientId}-{taxId} -->
+			<recordTitleFields>
+				<field>clientId</field>
+				<field>taxId</field>
+			</recordTitleFields>
+
+			<!-- When parsing and loading a record, beyond the 2 first main
+			lines, we have the content, typically a list of things (for a
+			statement, lines with label, credit denit etc.). This is the minimal size for
+			a line. Under this size, it is ignored	-->
+			<detailsLineMinSize>60</detailsLineMinSize>
+		</ldtParser>
+	</extension>
+
+</component>

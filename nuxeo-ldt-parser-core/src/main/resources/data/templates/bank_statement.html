@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Template</title>
+    <style>
+        body {
+            padding:0px;
+            font-family: Helvetica, Sans-Serif;
+        }
+
+        .banner {
+            width:100%;
+            margin-bottom: 32px;
+        }
+
+        .info {
+            width:100%;
+            display: -webkit-box; /* wkhtmltopdf uses this one */
+            display: -webkit-flex;
+            display: flex;
+            flex-direction: row;
+            -webkit-box-pack: justify;
+            webkit-justify-content: space-between;
+            justify-content: space-between;
+        }
+
+        .info .label {
+            font-size: medium;
+            font-weight: 800;
+            margin-bottom: 16px;
+        }
+
+        .operations {
+            width:100%;
+            margin-top:48px;
+            border: none;
+            border-spacing: 0px;
+        }
+
+        .header {
+            background-color: #f7f7f7;
+        }
+
+        .header th {
+            padding: 8px;
+            border-top-width: 2px  !important;
+            border-top-color: gray  !important;
+            border-top-style: solid !important;
+            border-bottom-width: 2px  !important;
+            border-bottom-color: gray  !important;
+            border-bottom-style: solid !important;
+        }
+
+        .header th:first-child {
+            border-left-width: 2px  !important;
+            border-left-color: gray  !important;
+            border-left-style: solid !important;
+        }
+
+
+        .header th:last-child {
+            border-right-width: 2px  !important;
+            border-right-color: gray  !important;
+            border-right-style: solid !important;
+        }
+
+        tbody tr td {
+           padding: 6px;
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: #dedddc;
+        }
+
+        .date {
+            text-align: center
+        }
+
+        th {
+            text-align: left
+        }
+
+        .negative {
+            color: red;
+            text-align: right;
+        }
+
+        .nolabel {
+            display: -webkit-box; /* wkhtmltopdf uses this one */
+            display: -webkit-flex;
+            display: flex;
+            flex-direction: row;
+            align-items: flex-end;
+            -webkit-align-self: flex-end;
+            align-self: flex-end;
+            -webkit-box-pack: end;
+            -webkit-box-orient: vertical; /* WebKit */
+        }
+
+        .amount {
+            padding-right: 50px;
+        }
+
+    </style>
+  </head>
+  <body>
+    <main>
+        <#if Context.statement.TipoForm == "BANK000L">
+            <img src="TODO"
+        <#elseif Context.statement.TipoForm == "BANK000G">
+            <img src="TODO"
+        </#if>
+
+        <div class="info">
+            <div>
+                <div class="label">
+                    Agência:
+                </div>
+                <div>
+                    ${Context.statement.Agencia}
+                </div>
+            </div>
+            <div>
+                <div class="label">
+                    Conta:
+                </div>
+                <div>
+                    ${Context.statement.NConta}
+                </div>
+            </div>
+            <div>
+                <div class="label">
+                    Nome:
+                </div>
+                <div>
+                    ${Context.statement.Nome}
+                </div>
+            </div>
+            <div class="nolabel">
+                ${Context.statement.MesAno}
+            </div>
+            <div class="nolabel">
+                000000002
+            </div>
+        </div>
+        <table class="operations">
+            <thead>
+                <tr class="header">
+                    <th class="date" style="width: 10%;">Data</th>
+                    <th style="width: 50%;">Histórico de Lançamentos</th>
+                    <th style="width: 10%;">Orig</th>
+                    <th style="width: 10%;">Valor (R$)</th>
+                    <th style="width: 20%;">Saldo (R$)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <#list Context.statement.Movimentacao as key, value>
+                    <tr>
+                        <td class="date">${value.Data}</td>
+                        <td>${value.Lancamento}</td>
+                        <td></td>
+                        <td class="amout ${value.Valor?ends_with("-")?then("negative", "" )}">${value.Valor}</td>
+                        <td class="amount ${value.Saldo?ends_with("-")?then("negative", "" )}">${value.Saldo}</td>
+                    </tr>
+                </#list>
+            </tbody>
+        </table>
+    </main>
+  </body>
+</html>
