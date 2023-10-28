@@ -233,7 +233,7 @@ public class LDTParser {
                                     .map(this::parseItem)
                                     .filter(Objects::nonNull)
                                     .collect(Collectors.toList());
-        return new Record(firstLine, secondLine, listItems);
+        return new Record(this, firstLine, secondLine, listItems);
     }
 
     public Record getRecord(Blob blob, long startOffset, long recordSize) {

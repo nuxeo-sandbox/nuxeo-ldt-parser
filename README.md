@@ -9,8 +9,13 @@ Goal is to build a configurable parser for LDT file. Most would be configured in
 
 => **See `ldtparser-service.xml` for configuration properties**
 
-What is ready "now" => Parsing an LDT, extract fields and avlues, map to a DocType and schema(s), retrieve.
+What is ready "now" => Parsing an LDT, extract fields and values, map to a DocType and schema(s), retrieve.
 
+Ultimate goals are:
+
+1. Parse an LDT, fill records and optionally create document types
+2. When needed get one single record from the LDT, in a very optimized way (using byte offsets and record size to get only what is needed from S3 for example).
+3. Then, get this record as Json so you can create the output you want (html, pdf, …)
 
 ## About LDT Parsing
 

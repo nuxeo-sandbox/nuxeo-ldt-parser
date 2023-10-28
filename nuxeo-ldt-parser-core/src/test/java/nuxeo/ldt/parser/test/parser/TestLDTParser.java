@@ -21,12 +21,9 @@
 package nuxeo.ldt.parser.test.parser;
 
 import com.fasterxml.jackson.core.JacksonException;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 
-import nuxeo.ldt.parser.service.Callbacks;
 import nuxeo.ldt.parser.service.LDTParser;
 import nuxeo.ldt.parser.service.LDTParserDescriptor;
 import nuxeo.ldt.parser.service.LDTParserService;
@@ -35,14 +32,14 @@ import nuxeo.ldt.parser.service.elements.MainLine;
 import nuxeo.ldt.parser.service.elements.Record;
 import nuxeo.ldt.parser.test.TestUtils;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.nuxeo.common.utils.FileUtils;
 import org.nuxeo.ecm.core.api.Blob;
 import org.nuxeo.ecm.core.api.NuxeoException;
-import org.nuxeo.ecm.core.api.impl.blob.FileBlob;
 import org.nuxeo.ecm.platform.test.PlatformFeature;
 import org.nuxeo.runtime.test.runner.Deploy;
 import org.nuxeo.runtime.test.runner.Features;
@@ -52,12 +49,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
-import java.io.File;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.inject.Inject;
 
@@ -299,14 +291,65 @@ public class TestLDTParser {
         
         assertNotNull(record);
         String jsonStr = record.toJson();
+        assertNotNull(jsonStr);
+        //System.out.println(jsonStr);
         
-        System.out.println(jsonStr);
+        JSONObject mainJson = new JSONObject(jsonStr);
+        assertNotNull(mainJson);
+        JSONObject rootElement = mainJson.getJSONObject("record");
+        assertNotNull(rootElement);
         
-        ObjectMapper objectMapper = new ObjectMapper();
-        JsonNode jsonNode = objectMapper.readTree(jsonStr);
+        //System.out.println(rootElement.get("clientId"));
+
+        assertEquals(TestUtils.SIMPLELDT_RECORD2_VALUES_MAP.get("clientId"), rootElement.get("clientId"));
+        assertEquals(TestUtils.SIMPLELDT_RECORD2_VALUES_MAP.get("taxId"), rootElement.get("taxId"));
         
-        assertNotNull(jsonNode);
-        assertEquals("12345678901567", jsonNode.get("record").get("line1").get("fieldsAndValues").get("taxId").asText());
+        JSONArray items = rootElement.getJSONArray("items");
+        assertEquals(TestUtils.SIMPLELDT_RECORD2_ITEMS_COUNT, items.length());
+        JSONObject item = (JSONObject) items.get(0);
+        assertEquals("OpeningBalance", (String) item.get("type"));
+        assertEquals("999.77", (String) item.get("amount"));
+        
+        item = (JSONObject) items.get(items.length() - 1);
+        assertEquals("ClosingBalance", (String) item.get("type"));
+        assertEquals("8575.55-", (String) item.get("amount"));
+        
+    }
+
+
+    @Test
+    public void testRecordObject2JsonNoRoot() throws JacksonException {
+        
+        Blob blob = TestUtils.getSimpleTestFileBlob();
+        LDTParser parser = ldtParserService.getParser(null);
+        Record record = parser.getRecord(blob, TestUtils.SIMPLELDT_RECORD2_STARTOFFSET,
+                TestUtils.SIMPLELDT_RECORD2_RECORDSIZE);
+        
+        assertNotNull(record);
+
+        LDTParserDescriptor parserDesc = parser.getDescriptor();
+        parserDesc.getRecordJsonTemplate().setRootName(null);
+        String jsonStr = record.toJson();
+        assertNotNull(jsonStr);
+        //System.out.println(jsonStr);
+        
+        JSONObject mainJson = new JSONObject(jsonStr);
+        assertNotNull(mainJson);
+        
+        //System.out.println(mainJson.get("clientId"));
+
+        assertEquals(TestUtils.SIMPLELDT_RECORD2_VALUES_MAP.get("clientId"), mainJson.get("clientId"));
+        assertEquals(TestUtils.SIMPLELDT_RECORD2_VALUES_MAP.get("taxId"), mainJson.get("taxId"));
+        
+        JSONArray items = mainJson.getJSONArray("items");
+        assertEquals(TestUtils.SIMPLELDT_RECORD2_ITEMS_COUNT, items.length());
+        JSONObject item = (JSONObject) items.get(0);
+        assertEquals("OpeningBalance", (String) item.get("type"));
+        assertEquals("999.77", (String) item.get("amount"));
+        
+        item = (JSONObject) items.get(items.length() - 1);
+        assertEquals("ClosingBalance", (String) item.get("type"));
+        assertEquals("8575.55-", (String) item.get("amount"));
         
     }
 

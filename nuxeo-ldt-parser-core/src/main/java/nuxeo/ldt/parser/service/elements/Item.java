@@ -28,6 +28,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.nuxeo.ecm.core.api.NuxeoException;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import nuxeo.ldt.parser.service.Constants;
 import nuxeo.ldt.parser.service.LDTItemDescriptor;
 import nuxeo.ldt.parser.service.LDTParserDescriptor;
@@ -44,10 +46,12 @@ public class Item {
 
     protected String line;
 
+    @JsonProperty("type")
     protected String type = null;
 
     protected List<String> fieldList = null;
 
+    @JsonProperty("values")
     protected Map<String, String> fieldsAndValues = null;
 
     public Item(String line, String type, List<String> fieldList, Map<String, String> fieldsAndValues) {

@@ -40,9 +40,9 @@ public class LDTParserDescriptor {
     protected String name = null;
 
     /*
-    @XNode("class")
-    protected Class<?> klass;
-    */
+     * @XNode("class")
+     * protected Class<?> klass;
+     */
 
     @XNode("recordStartToken")
     protected String recordStartToken = null;
@@ -50,64 +50,67 @@ public class LDTParserDescriptor {
     @XNode("recordEndToken")
     protected String recordEndToken = null;
 
-    //@XNode("useCallback")
-    //protected Boolean useCallback;
-    
+    // @XNode("useCallback")
+    // protected Boolean useCallback;
+
     @XNode("patternLine1")
     protected String patternLine1 = null;
-    
+
     @XNode("altPatternLine1")
     protected String altPatternLine1 = null;
-    
+
     @XNodeList(value = "fieldsLine1/field", type = ArrayList.class, componentType = String.class)
     protected List<String> fieldsLine1 = new ArrayList<>();
-    
+
     @XNode("patternLine2")
     protected String patternLine2 = null;
-    
+
     @XNode("altPatternLine2")
     protected String altPatternLine2 = null;
-    
+
     @XNodeList(value = "fieldsLine2/field", type = ArrayList.class, componentType = String.class)
     protected List<String> fieldsLine2 = new ArrayList<>();
-    
+
     @XNode("useCallbackForItems")
     protected Boolean useCallbackForItems = false;
-    
+
     @XNode("callbacksClass")
     protected Class<?> callbacksClass;
 
     @XNodeList(value = "itemLine", type = LDTItemDescriptor[].class, componentType = LDTItemDescriptor.class)
     public LDTItemDescriptor[] items;
-    
+
     @XNode("detailsLineMinSize")
     protected Integer detailsLineMinSize = 0;
-    
+
     @XNode("ignoreMalformedLines")
     protected Boolean ignoreMalformedLines = false;
-    
+
     @XNode("recordDocType")
     protected String recordDocType = null;
-    
+
     @XNodeMap(value = "recordFieldsMapping/field", key = "@xpath", type = HashMap.class, componentType = String.class)
     protected Map<String, String> recordFieldsMapping = new HashMap<>();
-    
+
     @XNode("recordsContainerDocType")
     protected String recordsContainerDocType = null;
-    
+
     @XNode("recordsContainerSuffix")
     protected String recordsContainerSuffix = null;
-    
+
     @XNodeList(value = "recordTitleFields/field", type = ArrayList.class, componentType = String.class)
     protected List<String> recordTitleFields = new ArrayList<>();
+
+    @XNode(value = "recordJsonTemplate")
+    protected LDTRecordJsonTemplateDescriptor recordJsonTemplate;
 
     public String getName() {
         return name;
     }
 
-    //public Class<?> getKlass() {
-    //    return klass;
-    //}
+    // public Class<?> getKlass() {
+    // return klass;
+    // }
 
     public String getRecordStartToken() {
         return recordStartToken;
@@ -124,7 +127,7 @@ public class LDTParserDescriptor {
     public String getAltPatternLine1() {
         return altPatternLine1;
     }
-    
+
     public List<String> getFieldsLine1() {
         return fieldsLine1;
     }
@@ -136,108 +139,112 @@ public class LDTParserDescriptor {
     public String getAltPatternLine2() {
         return altPatternLine2;
     }
-    
+
     public List<String> getFieldsLine2() {
         return fieldsLine2;
     }
-    
+
     public List<String> getAllLinefields() {
         List<String> mergedList = null;
-        
-        if(fieldsLine1 != null) {
+
+        if (fieldsLine1 != null) {
             mergedList = new ArrayList<>(fieldsLine1);
         }
 
-        if(fieldsLine2 != null) {
-            if(mergedList == null) {
+        if (fieldsLine2 != null) {
+            if (mergedList == null) {
                 mergedList = new ArrayList<>(fieldsLine2);
             } else {
                 mergedList.addAll(fieldsLine2);
             }
         }
-        
+
         return mergedList;
     }
 
     public boolean useCallbackForItems() {
         return useCallbackForItems.booleanValue();
     }
-    
+
     public void setUseCallbackForItems(boolean value) {
         useCallbackForItems = value;
     }
-    
+
     public Class<?> getCallbacksClass() {
         return callbacksClass;
     }
-    
+
     public void setCallbacksClass(Class<?> klass) {
         callbacksClass = klass;
     }
-    
+
     public LDTItemDescriptor[] getItems() {
         return items;
     }
-    
+
     public boolean ignoreMalformedLines() {
         return ignoreMalformedLines.booleanValue();
     }
-    
+
     public void setIgnoreMalformedLines(boolean value) {
         ignoreMalformedLines = value;
     }
-    
+
     public int getDetailsLineMinSize() {
-        if(detailsLineMinSize == null) {
+        if (detailsLineMinSize == null) {
             detailsLineMinSize = 0;
         }
         return detailsLineMinSize.intValue();
     }
-    
+
     public String getRecordDocType() {
-        if(recordDocType == null) {
+        if (recordDocType == null) {
             recordDocType = Constants.DOC_TYPE_LDTRECORD;
         }
-        
+
         return recordDocType;
     }
-    
+
     public Map<String, String> getRecordFieldsMapping() {
         return recordFieldsMapping;
     }
-    
+
     /**
      * Concatenate the list of 2 fields, return only the keys
      * 
      * @return the list of fields. If none was defined, returns an empty list (nont null)
      */
     public List<String> getLDTRecordXPaths() {
-        
-        if(recordFieldsMapping != null) {
+
+        if (recordFieldsMapping != null) {
             return new ArrayList<String>(recordFieldsMapping.keySet());
         }
-        
+
         return new ArrayList<String>();
     }
-    
+
     public String getRecordsContainerDocType() {
-        if(recordsContainerDocType == null) {
+        if (recordsContainerDocType == null) {
             recordsContainerDocType = Constants.RECORDS_CONTAINER_TYPE;
         }
-        
+
         return recordsContainerDocType;
     }
-    
+
     public String getRecordsContainerSuffix() {
-        if(recordsContainerSuffix == null) {
+        if (recordsContainerSuffix == null) {
             recordsContainerSuffix = Constants.RECORDS_CONTAINER_SUFFIX;
         }
-        
+
         return recordsContainerSuffix;
     }
-    
+
     public List<String> getRecordTitleFields() {
         return recordTitleFields;
     }
     
+    public LDTRecordJsonTemplateDescriptor getRecordJsonTemplate() {
+        return recordJsonTemplate;
+    }
+
 }

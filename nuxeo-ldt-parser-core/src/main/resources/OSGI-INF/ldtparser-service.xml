@@ -181,6 +181,57 @@
 			statement, lines with label, credit denit etc.). This is the minimal size for
 			a line. Under this size, it is ignored	-->
 			<detailsLineMinSize>60</detailsLineMinSize>
+			
+			<!-- When exporting a record, which fields to return -->
+			<recordJsonTemplate>
+				<!-- Label of the root element -->
+				<!-- Can be ignored or null. If not null, the Hson will be like:
+				    {
+				      "record": {
+				        . . . properties . . .
+				       }
+				     }
+				     
+				     Else, directly the properties:
+				     {
+				        . . . properties . . .
+				     }
+				 -->
+				<rootName>record</rootName>
+				<!-- All the "Main" fields to store, not the list of items. They must of course have been defined above -->
+				<properties>
+					<!-- In this default-example, we use same fields as in fieldsLine1 and fieldsLine -->
+					<!-- Special name: "ALL_MAIN_LINE". If you have property name="ALL_MAIN_LINE",
+					     then we export all the fields on MainLine 1 and 2, using the field names as propertis -->
+					<property>bankType</property>
+					<property>clientType</property>
+					<property>taxId</property>
+					<property>clientId</property>
+					<property>bankId</property>
+					<property>clientName</property>
+					<property>month</property>
+					<property>year</property>
+					<property>customRef</property>
+					
+					<!-- For now, items are not configurable. We export all the item fields.
+					     This will be an array of "items", each of them having the properties
+					     defined above, in each itemLine.
+					     With this "default" configuration, it will lok like:
+					     "items": [
+					       {
+					         "type": "OpeningBalance",
+					         "lineCode": "3",
+					         "date": "03/05",
+					         "amount": "1234.56-"
+					       }
+					       {
+					         "type": "ItemLine",
+					         . . . fields for an itemLine of this type
+					       
+					     ]
+					     This is the only way to export items as of "today" -->
+				</properties>
+			</recordJsonTemplate>
 		</ldtParser>
 	</extension>
 

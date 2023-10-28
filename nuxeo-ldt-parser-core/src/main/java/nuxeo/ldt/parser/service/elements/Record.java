@@ -20,12 +20,21 @@
 package nuxeo.ldt.parser.service.elements;
 
 import java.util.List;
+import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonRootName;
 import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+
+import nuxeo.ldt.parser.service.LDTParser;
+import nuxeo.ldt.parser.service.LDTRecordJsonTemplateDescriptor;
+
+import org.apache.commons.lang3.StringUtils;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * A Record holds the full record : MainLines and Items
@@ -34,6 +43,8 @@ import com.fasterxml.jackson.databind.SerializationFeature;
  */
 @JsonRootName(value = "record")
 public class Record {
+    
+    LDTParser parser;
 
     @JsonProperty("line1")
     protected MainLine line1;
@@ -44,7 +55,9 @@ public class Record {
     @JsonProperty("items")
     protected List<Item> items;
 
-    public Record(MainLine line1, MainLine line2, List<Item> items) {
+    public Record(LDTParser parser, MainLine line1, MainLine line2, List<Item> items) {
+        this.parser = parser;
+        
         this.line1 = line1;
         this.line2 = line2;
         this.items = items;
@@ -52,11 +65,43 @@ public class Record {
 
     public String toJson() throws JacksonException {
         // @TODO - tune all this, allows for sending a "proper" json, not all in a raw
+        /*
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.configure(SerializationFeature.WRAP_ROOT_VALUE, true);
         String json = objectMapper.writeValueAsString(this);
+        */
+        
+        LDTRecordJsonTemplateDescriptor desc = parser.getDescriptor().getRecordJsonTemplate();
+        String rootName = desc.getRootName();
+        JSONObject mainJson;
+        mainJson = new JSONObject();
+        JSONObject rootObject;
+        if(!StringUtils.isBlank(rootName) && !"null".equals(rootName.toLowerCase())) {
+            rootObject = new JSONObject();
+            mainJson.put(rootName, rootObject);
+        } else {
+            rootObject = mainJson;
+        }
+        
+        for(String field : desc.getProperties()) {
+            rootObject.put(field, getMainLinesValue(field));
+        }
+        
+        // Now the items
+        JSONArray jsonItems = new JSONArray();
+        for(Item item : items) {
+            JSONObject oneJsonItem = new JSONObject();
+            oneJsonItem.put("type", item.getType());
+            oneJsonItem.put("line", item.getLine());
+            for (Map.Entry<String, String> entry : item.getFieldsAndValues().entrySet()) {
+                oneJsonItem.put(entry.getKey(), entry.getValue());
+            }
+            
+            jsonItems.put(oneJsonItem);
+        }
+        rootObject.put("items", jsonItems);
 
-        return json;
+        return mainJson.toString();
     }
 
     public String getMainLinesValue(String key) {
