@@ -25,15 +25,12 @@ import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonRootName;
 import com.fasterxml.jackson.core.JacksonException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 
+import nuxeo.ldt.parser.service.descriptors.LDTRecordJsonTemplateDescriptor;
 import nuxeo.ldt.parser.service.LDTParser;
-import nuxeo.ldt.parser.service.LDTRecordJsonTemplateDescriptor;
 
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 /**

@@ -1,5 +1,7 @@
 package nuxeo.ldt.parser.service;
 
+import nuxeo.ldt.parser.service.descriptors.LDTParserDescriptor;
+
 public interface LDTParserService {
     
     /**

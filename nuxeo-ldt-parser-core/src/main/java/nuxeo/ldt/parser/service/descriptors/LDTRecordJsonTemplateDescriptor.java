@@ -16,17 +16,13 @@
  * Contributors:
  *     Thibaud Arguillere
  */
-package nuxeo.ldt.parser.service;
+package nuxeo.ldt.parser.service.descriptors;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.regex.Pattern;
 
 import org.nuxeo.common.xmap.annotation.XNode;
 import org.nuxeo.common.xmap.annotation.XNodeList;
-import org.nuxeo.common.xmap.annotation.XNodeMap;
 import org.nuxeo.common.xmap.annotation.XObject;
 
 /**
@@ -35,32 +31,32 @@ import org.nuxeo.common.xmap.annotation.XObject;
  * @since 2021
  */
 @XObject("itemLine")
-public class LDTItemDescriptor {
+public class LDTRecordJsonTemplateDescriptor {
+   
 
-    @XNode("type")
-    protected String type = null;
+    @XNode("rootName")
+    protected String rootName = null;
     
-    @XNode("pattern")
-    protected String patternStr = null;
-    
-    protected Pattern pattern = null;
-    
-    @XNodeList(value = "fields/field", type = ArrayList.class, componentType = String.class)
-    protected List<String> fields = new ArrayList<>();
+    @XNodeList(value = "properties/property", type = ArrayList.class, componentType = String.class)
+    protected List<String> properties = new ArrayList<>();
 
-    public String getType() {
-        return type;
-    }
-
-    public Pattern getPattern() {
-        if(pattern == null) {
-            pattern = Pattern.compile(patternStr);
-        }
-        return pattern;
+    public String getRootName() {
+        return rootName;
     }
     
-    public List<String> getFields() {
-        return fields;
+    /**
+     * value can be empty or null (no root element)
+     * @param value
+     * @since TODO
+     */
+    public void setRootName(String value) {
+        rootName = value;
     }
+    
+    public List<String> getProperties() {
+        return properties;
+    }
+    
+    
     
 }

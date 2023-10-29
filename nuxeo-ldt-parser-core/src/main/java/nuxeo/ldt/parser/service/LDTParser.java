@@ -20,11 +20,11 @@
 
 package nuxeo.ldt.parser.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import nuxeo.ldt.parser.service.descriptors.LDTParserDescriptor;
 import nuxeo.ldt.parser.service.elements.Item;
 import nuxeo.ldt.parser.service.elements.MainLine;
 import nuxeo.ldt.parser.service.elements.Record;
@@ -59,7 +59,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
 import java.text.NumberFormat;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -71,7 +70,7 @@ import java.util.stream.Collectors;
 /**
  * TODO write the main usage class
  * 
- * @since TODO
+ * @since 2021
  */
 public class LDTParser {
 
@@ -142,7 +141,6 @@ public class LDTParser {
                 callbacks = (Callbacks) config.getCallbacksClass().getConstructor().newInstance();
             } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
                     | InvocationTargetException | NoSuchMethodException | SecurityException e) {
-                // TODO Auto-generated catch block
                 throw new NuxeoException("Cannot load LDTParser", e);
             }
         } else {
@@ -195,7 +193,7 @@ public class LDTParser {
         }
 
         // If we are here, it means we did not find a valid pattern. We give up
-        if (config.ignoreMalformedLines) {
+        if (config.ignoreMalformedLines()) {
             log.warn("IGNORED Malformed/Unexpected group(s) in second line of record <" + line + ">");
             return null;
         }
@@ -321,6 +319,7 @@ public class LDTParser {
 
             List<String> rawRecord = new ArrayList<>();
 
+            @SuppressWarnings("unused")
             MainLine firstLine = parseRecordFirstLine(line);
             String second = it.nextLine();
             MainLine secondLine = parseRecordSecondLine(second);

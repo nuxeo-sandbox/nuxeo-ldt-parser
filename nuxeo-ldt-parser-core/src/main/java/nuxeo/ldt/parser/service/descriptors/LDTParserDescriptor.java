@@ -16,7 +16,7 @@
  * Contributors:
  *     Thibaud Arguillere
  */
-package nuxeo.ldt.parser.service;
+package nuxeo.ldt.parser.service.descriptors;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,6 +27,8 @@ import org.nuxeo.common.xmap.annotation.XNode;
 import org.nuxeo.common.xmap.annotation.XNodeList;
 import org.nuxeo.common.xmap.annotation.XNodeMap;
 import org.nuxeo.common.xmap.annotation.XObject;
+
+import nuxeo.ldt.parser.service.Constants;
 
 /**
  * See description of values in ldtparser-service.xml
@@ -52,6 +54,16 @@ public class LDTParserDescriptor {
 
     // @XNode("useCallback")
     // protected Boolean useCallback;
+    
+    
+    // ================================ TEST
+    @XNodeList(value = "headers", type = LDTHeaderLineDescriptor.class, componentType = LDTHeaderLineDescriptor.class)
+    public LDTItemDescriptor headers;
+    // ================================ TEST
+    
+    public LDTItemDescriptor getHeaders() {
+        return headers;
+    }
 
     @XNode("patternLine1")
     protected String patternLine1 = null;

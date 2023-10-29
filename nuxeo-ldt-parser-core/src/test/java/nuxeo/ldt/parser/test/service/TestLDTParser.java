@@ -9,6 +9,7 @@ import org.nuxeo.runtime.test.runner.Deploy;
 import org.nuxeo.runtime.test.runner.Features;
 import org.nuxeo.runtime.test.runner.FeaturesRunner;
 
+import nuxeo.ldt.parser.service.LDTParser;
 import nuxeo.ldt.parser.service.LDTParserService;
 
 import javax.inject.Inject;
@@ -19,10 +20,16 @@ import javax.inject.Inject;
 public class TestLDTParser {
 
     @Inject
-    protected LDTParserService ldtparser;
+    protected LDTParserService ldtParserService;
 
     @Test
     public void testService() {
-        assertNotNull(ldtparser);
+        assertNotNull(ldtParserService);
+    }
+    
+    @Test
+    public void hadDefaultParser() {
+        LDTParser parser = ldtParserService.getParser(null);
+        assertNotNull(parser);
     }
 }

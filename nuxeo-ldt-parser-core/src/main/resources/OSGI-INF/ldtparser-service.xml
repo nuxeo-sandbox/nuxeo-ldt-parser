@@ -13,7 +13,7 @@
 	</service>
 
 	<extension-point name="ldtParser">
-		<object class="nuxeo.ldt.parser.service.LDTParserDescriptor" />
+		<object class="nuxeo.ldt.parser.service.descriptors.LDTParserDescriptor" />
 	</extension-point>
 
 	<!-- Default contribution -->
@@ -34,6 +34,33 @@
                  These values are used in unit tests, mainly -->
 			<recordStartToken>$12345ABCD$</recordStartToken>
 			<recordEndToken>CLOSING BALANCE    </recordEndToken>
+			
+			<!-- Order is important -->
+			<headers>
+				<header>
+					<name>firstLine</name>
+					<pattern>^\$12345ABCD\$ *TYPE=(BANK.{4}) *CLIENT TYPE: *([a-zA-Z]) *TAX ID: *([A-Z0-9]*) *CLIENT ID: *([A-Z0-9]*)</pattern>
+					<fields>
+						<field>bankType</field>
+						<field>clientType</field>
+						<field>taxId</field>
+						<field>clientId</field>
+					</fields>
+				</header>
+				
+				<header>
+					<name>secondLine</name>
+					<pattern>^([A-Z0-9]*) *(.*?) *(JANUARY|FEBRUARY|MARCH|APRIL|MAY|JUNE|JULY|AUGUST|SEPTEMBER|OCTOBER|NOVEMBER|DECEMBER)-(\d{4}) *([A-Z0-9]*)</pattern>
+					<fields>
+						<field>bankId</field>
+						<field>clientName</field>
+						<field>month</field>
+						<field>year</field>
+						<field>customRef</field>
+					</fields>
+				</header>
+			</headers>
+			
 			<!-- Example of first line -->
 			<!-- $12345ABCD$    TYPE=BANK0003  CLIENT TYPE: F     TAX ID: 12345678901234    CLIENT ID: 1234567890ABC12 -->
 			<!-- WARNING: Do not format this in eclipse (command-F), we don't want a line -->

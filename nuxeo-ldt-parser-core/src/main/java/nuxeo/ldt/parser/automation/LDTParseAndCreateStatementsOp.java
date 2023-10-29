@@ -66,6 +66,7 @@ public class LDTParseAndCreateStatementsOp {
         }
         
         LDTParser parser = ldtParserService.getParser(parserName);
+        @SuppressWarnings("unused")
         LDTInfo info = parser.parseAndCreateStatements(doc);
         
         return doc;

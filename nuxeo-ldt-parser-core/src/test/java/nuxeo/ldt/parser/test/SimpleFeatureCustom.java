@@ -10,9 +10,6 @@ import org.nuxeo.ecm.blob.s3.S3BlobProviderFeature;
 import org.nuxeo.runtime.api.Framework;
 import org.nuxeo.runtime.test.runner.Deploy;
 import org.nuxeo.runtime.test.runner.FeaturesRunner;
-import org.nuxeo.runtime.test.runner.RunnerFeature;
-
-import com.google.inject.Binder;
 
 /**
  * =======================================================================

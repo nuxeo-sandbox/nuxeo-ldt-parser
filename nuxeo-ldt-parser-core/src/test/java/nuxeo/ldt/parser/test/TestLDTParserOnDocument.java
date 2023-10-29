@@ -47,7 +47,7 @@ import org.nuxeo.runtime.test.runner.FeaturesRunner;
 import org.nuxeo.runtime.test.runner.TransactionalFeature;
 
 import nuxeo.ldt.parser.automation.LDTParseAndCreateStatementsOp;
-import nuxeo.ldt.parser.service.LDTParserDescriptor;
+import nuxeo.ldt.parser.service.descriptors.LDTParserDescriptor;
 import nuxeo.ldt.parser.service.LDTParserService;
 
 import javax.inject.Inject;

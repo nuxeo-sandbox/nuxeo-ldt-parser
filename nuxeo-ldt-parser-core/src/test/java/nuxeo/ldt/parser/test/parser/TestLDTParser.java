@@ -21,11 +21,9 @@
 package nuxeo.ldt.parser.test.parser;
 
 import com.fasterxml.jackson.core.JacksonException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
+import nuxeo.ldt.parser.service.descriptors.LDTParserDescriptor;
 import nuxeo.ldt.parser.service.LDTParser;
-import nuxeo.ldt.parser.service.LDTParserDescriptor;
 import nuxeo.ldt.parser.service.LDTParserService;
 import nuxeo.ldt.parser.service.elements.Item;
 import nuxeo.ldt.parser.service.elements.MainLine;

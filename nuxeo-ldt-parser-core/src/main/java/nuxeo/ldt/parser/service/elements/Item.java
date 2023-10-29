@@ -30,9 +30,9 @@ import org.nuxeo.ecm.core.api.NuxeoException;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import nuxeo.ldt.parser.service.descriptors.LDTItemDescriptor;
+import nuxeo.ldt.parser.service.descriptors.LDTParserDescriptor;
 import nuxeo.ldt.parser.service.Constants;
-import nuxeo.ldt.parser.service.LDTItemDescriptor;
-import nuxeo.ldt.parser.service.LDTParserDescriptor;
 
 /**
  * An Item is a line in the LDT that, basically, is not a MainLine.

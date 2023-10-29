@@ -5,9 +5,10 @@ import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.nuxeo.runtime.model.ComponentContext;
-import org.nuxeo.runtime.model.ComponentInstance;
 import org.nuxeo.runtime.model.DefaultComponent;
 import org.nuxeo.runtime.model.Extension;
+
+import nuxeo.ldt.parser.service.descriptors.LDTParserDescriptor;
 
 public class LDTParserServiceImpl extends DefaultComponent implements LDTParserService {
     

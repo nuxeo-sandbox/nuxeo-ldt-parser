@@ -22,7 +22,6 @@ package nuxeo.ldt.parser.converter;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 
 import nuxeo.ldt.parser.service.LDTParser;
 import nuxeo.ldt.parser.service.LDTParserService;
