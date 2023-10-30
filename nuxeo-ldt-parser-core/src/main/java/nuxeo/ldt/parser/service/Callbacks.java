@@ -18,9 +18,12 @@
  */
 package nuxeo.ldt.parser.service;
 
+import java.util.List;
+
 import nuxeo.ldt.parser.service.descriptors.LDTParserDescriptor;
 import nuxeo.ldt.parser.service.elements.HeaderLine;
 import nuxeo.ldt.parser.service.elements.Item;
+import nuxeo.ldt.parser.service.elements.Record;
 
 /**
  * TOTO explain the class and don't forget about the usage of the LDTParserDescriptor parameter
@@ -28,6 +31,8 @@ import nuxeo.ldt.parser.service.elements.Item;
  * @since 2021
  */
 public interface Callbacks {
+    
+    Record parseRecord(LDTParserDescriptor config, List<String> lines);
 
     HeaderLine parseHeader(LDTParserDescriptor config, String line, long lineNumber);
 

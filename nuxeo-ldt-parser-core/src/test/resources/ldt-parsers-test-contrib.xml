@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component name="nuxeo.ldt.parser.test.custom.parsers">
+  <require>nuxeo.ldt.parser.service.LDTParser</require>
+  <extension target="nuxeo.ldt.parser.service.LDTParser"
+             point="ldtParser">
+    <ldtParser>
+      <name>test-callbacks-record</name>
+      <recordStartToken>$12345ABCD$</recordStartToken>
+      <recordEndToken>CLOSING BALANCE    </recordEndToken>
+      <useCallbackForRecord>true</useCallbackForRecord>
+      <callbacksClass>nuxeo.ldt.parser.service.CallbacksExample</callbacksClass>
+    </ldtParser>
+    
+    <ldtParser>
+      <name>test-callbacks-header</name>
+      <recordStartToken>$12345ABCD$</recordStartToken>
+      <recordEndToken>CLOSING BALANCE    </recordEndToken>
+      <useCallbackForHeaders>true</useCallbackForHeaders>
+      <callbacksClass>nuxeo.ldt.parser.service.CallbacksExample</callbacksClass>
+    </ldtParser>
+    
+    <ldtParser>
+      <name>test-callbacks-item</name>
+      <recordStartToken>$12345ABCD$</recordStartToken>
+      <recordEndToken>CLOSING BALANCE    </recordEndToken>
+      <useCallbackForItems>true</useCallbackForItems>
+      <callbacksClass>nuxeo.ldt.parser.service.CallbacksExample</callbacksClass>
+    </ldtParser>
+  </extension>
+  
+</component>

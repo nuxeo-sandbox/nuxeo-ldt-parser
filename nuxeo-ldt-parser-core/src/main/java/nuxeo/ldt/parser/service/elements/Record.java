@@ -42,15 +42,24 @@ import org.json.JSONObject;
 @JsonRootName(value = "record")
 public class Record {
     
-    LDTParser parser;
+    protected LDTParser parser;
 
     @JsonProperty("headers")
-    protected ArrayList<HeaderLine> headers;
+    protected List<HeaderLine> headers;
 
     @JsonProperty("items")
     protected List<Item> items;
+    
+    public Record(List<HeaderLine> headers, List<Item> items) {
+        this.headers = headers;
+        this.items = items;
+    }
+    
+    public void setParser(LDTParser parser) {
+        parser = this.parser;
+    }
 
-    public Record(LDTParser parser, ArrayList<HeaderLine> headers, List<Item> items) {
+    public Record(LDTParser parser, List<HeaderLine> headers, List<Item> items) {
         this.parser = parser;
         this.headers = headers;
         this.items = items;

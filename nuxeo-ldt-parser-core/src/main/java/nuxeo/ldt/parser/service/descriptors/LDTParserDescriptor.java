@@ -54,15 +54,18 @@ public class LDTParserDescriptor {
 
     @XNode("useCallbackForHeaders")
     protected Boolean useCallbackForHeaders = false;
-    
-    @XNodeList(value = "headers/header", type = LDTHeaderDescriptor[].class, componentType = LDTHeaderDescriptor.class)
-    protected LDTHeaderDescriptor[] headers;
 
     @XNode("useCallbackForItems")
     protected Boolean useCallbackForItems = false;
+    
+    @XNode("useCallbackForRecord")
+    protected Boolean useCallbackForRecord = false;
 
     @XNode("callbacksClass")
     protected Class<?> callbacksClass;
+    
+    @XNodeList(value = "headers/header", type = LDTHeaderDescriptor[].class, componentType = LDTHeaderDescriptor.class)
+    protected LDTHeaderDescriptor[] headers;
 
     @XNodeList(value = "itemLine", type = LDTItemDescriptor[].class, componentType = LDTItemDescriptor.class)
     public LDTItemDescriptor[] items;
@@ -107,24 +110,20 @@ public class LDTParserDescriptor {
         return recordEndToken;
     }
 
+    public boolean useCallbackForRecord() {
+        return useCallbackForRecord.booleanValue();
+    }
+
+    public void setUseCallbackForRecord(boolean value) {
+        useCallbackForRecord = value;
+    }
+
     public boolean useCallbackForHeaders() {
         return useCallbackForHeaders.booleanValue();
     }
-    
-    public LDTHeaderDescriptor[] getHeaders() {
-        return headers;
-    }
 
-    public List<String> getAllHeaderfields() {
-        
-        List<String> finalList = new ArrayList<String>();
-        
-        for(LDTHeaderDescriptor headerDesc : headers) {
-            List<String> mergedList = new ArrayList<String>(headerDesc.getFields());
-            finalList.addAll(mergedList);
-        }
-
-        return finalList;
+    public void setUseCallbackForHeaders(boolean value) {
+        useCallbackForHeaders = value;
     }
 
     public boolean useCallbackForItems() {
@@ -141,6 +140,22 @@ public class LDTParserDescriptor {
 
     public void setCallbacksClass(Class<?> klass) {
         callbacksClass = klass;
+    }
+    
+    public LDTHeaderDescriptor[] getHeaders() {
+        return headers;
+    }
+
+    public List<String> getAllHeaderfields() {
+        
+        List<String> finalList = new ArrayList<String>();
+        
+        for(LDTHeaderDescriptor headerDesc : headers) {
+            List<String> mergedList = new ArrayList<String>(headerDesc.getFields());
+            finalList.addAll(mergedList);
+        }
+
+        return finalList;
     }
 
     public LDTItemDescriptor[] getItems() {

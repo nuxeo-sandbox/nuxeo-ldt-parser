@@ -43,14 +43,31 @@
 			<recordStartToken>$12345ABCD$</recordStartToken>
 			<recordEndToken>CLOSING BALANCE    </recordEndToken>
       
-            <!-- If true, the parser does not parse headers but calls the callback with
+            <!-- ================================================== -->
+            <!-- Callbacks -->
+            <!-- ================================================== -->
+            <!--  Callbacks can be set for parsing lines and returning corresponding elements
+                  This is useful when a Regex can't be used and/or use case is too complex to
+                  be defined in configuration. For example, you need to line.indexOf() instead
+                  of a Regex.
+                  See nuxeo.ldt.parser.service.CallbacksExample for an example-->
+            <!-- useCallbackForHeaders
+                 If true, the parser does not parse headers but calls the callback with
                  the Callbacks#parseHeader callback.
-                 This is to be used when a Regex cannot resolve lines and you need to search
-                 for terms (like indexOf()), or when the same line can hold different Regex.
-                  -->
+                 Not called if useCallbackForRecord is true -->
             <useCallbackForHeaders>false</useCallbackForHeaders>
-            <!-- If true, the parser does not parse items but calls the callback with the Callbacks#parseItem callback -->
+             <!-- useCallbackForItems
+                  If true, the parser does not parse headers but calls the callback with
+                  the Callbacks#parseHeader callback.
+                  Not called if useCallbackForRecord is true -->
             <useCallbackForItems>false</useCallbackForItems>
+             <!-- useCallbackForRecord
+                  If true, the parser does not parse the record but calls the callback with
+                  the Callbacks#parseRecord callback.
+                  IMPORTANT
+                  Notice that if this is true, then the parsing is not done by this plugin and
+                  thus it will not try to parseHeader() or parseItem()-->
+            <useCallbackForRecord>false</useCallbackForRecord>
             <!-- An example of callback -->
             <callbacksClass>nuxeo.ldt.parser.service.CallbacksExample</callbacksClass>
 			

@@ -100,33 +100,40 @@ public class LDTParser {
         this.recordStartToken = config.getRecordStartToken();
         this.recordEndToken = config.getRecordEndToken();
 
-        if (config.useCallbackForItems() || config.useCallbackForHeaders()) {
-            loadCallbacksClass();
-        }
-    }
-
-    protected void loadCallbacksClass() {
-        if (config.getCallbacksClass() != null) {
-            try {
-                callbacks = (Callbacks) config.getCallbacksClass().getConstructor().newInstance();
-            } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
-                    | InvocationTargetException | NoSuchMethodException | SecurityException e) {
-                throw new NuxeoException("Cannot load LDTParser", e);
-            }
-        } else {
-            callbacks = null;
-        }
+        loadCallbacksClass();
     }
     
-    protected Callbacks getCallbacks() {
-        if (config.useCallbackForItems()) {
-            if (callbacks == null) { // Can happen when LDTParserDescriptor#setUseCallbackForItems is changed
-                loadCallbacksClass();
+    public String getName() {
+        return name;
+    }
+
+    /*
+     * Returns the Callbacks object.
+     * If configuration asks for a callback but there is no getCallbacksClass(), we trhow an error
+     */
+    protected Callbacks loadCallbacksClass() {
+        if (config.useCallbackForRecord() || config.useCallbackForHeaders() || config.useCallbackForItems()) {
+            if (callbacks == null) {
+                if (config.getCallbacksClass() != null) {
+                    try {
+                        callbacks = (Callbacks) config.getCallbacksClass().getConstructor().newInstance();
+                    } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+                            | InvocationTargetException | NoSuchMethodException | SecurityException e) {
+                        throw new NuxeoException("Cannot instantiate the callback class", e);
+                    }
+                } else {
+                    throw new NuxeoException("Configuration set to use callbacks, but no callback class set");
+                }
             }
         } else {
             callbacks = null;
         }
+
         return callbacks;
+    }
+
+    protected Callbacks getCallbacks() {
+        return loadCallbacksClass();
     }
 
     public LDTParserDescriptor getDescriptor() {
@@ -140,64 +147,71 @@ public class LDTParser {
     public boolean isRecordEnd(String line) {
         return line.indexOf(recordEndToken) > -1;
     }
-    
+
     public HeaderLine parseRecordHeader(String line, long lineNumber) {
-        
-        if (getCallbacks() != null) {
+
+        if (config.useCallbackForHeaders()) {
             return callbacks.parseHeader(config, line, lineNumber);
         }
-        
+
         for (LDTHeaderDescriptor header : config.getHeaders()) {
             Matcher m = header.getCompiledPattern().matcher(line);
             if (m.matches()) {
                 return new HeaderLine(m, header.getFields(), lineNumber);
             }
         }
-        
+
         return null;
-        
+
     }
 
     public Item parseItem(String line) {
-        
-        //System.out.println("PARSE ITEM: <" + line + ">");
 
-        if (getCallbacks() != null) {
+        // System.out.println("PARSE ITEM: <" + line + ">");
+
+        if (config.useCallbackForItems()) {
             return callbacks.parseItem(config, line);
         }
 
         if (config.getDetailsLineMinSize() > 0 && line.length() < config.getDetailsLineMinSize()) {
-            //System.out.println("LESS THAN MINIMAL LENGTH: " + line);
+            // System.out.println("LESS THAN MINIMAL LENGTH: " + line);
             return null;
         }
 
         return new Item(line, config);
     }
-    
+
     public Record parseRecord(List<String> lines) {
-        
+
+        if (config.useCallbackForRecord()) {
+            Record rec = callbacks.parseRecord(config, lines);
+            rec.setParser(this);
+            return rec;
+        }
+
         int idx = -1;
         ArrayList<HeaderLine> headers = new ArrayList<HeaderLine>();
         // A record always starts with at least one header line
-        for(String oneLine : lines) {
+        for (String oneLine : lines) {
             HeaderLine header = parseRecordHeader(oneLine, idx + 2);
-            if(header != null) {
+            if (header != null) {
                 headers.add(header);
                 idx += 1;
             } else {
                 // If we are at the first line then we have an issue.
-                if(idx == -1) {
+                if (idx == -1) {
                     if (config.ignoreMalformedLines()) {
-                        log.warn("IGNORED Malformed/Unexpected group(s) in headers (no header found) for line <" + oneLine + ">");
+                        log.warn("IGNORED Malformed/Unexpected group(s) in headers (no header found) for line <"
+                                + oneLine + ">");
                         return null;
                     }
                     throw new NuxeoException("Malformed header line, no matching Pattern found for <" + oneLine + ">");
-                    
+
                 }
                 break;
             }
         }
-        
+
         List<Item> listItems = lines.subList(idx + 1, lines.size())
                                     .stream()
                                     .map(this::parseItem)
@@ -259,9 +273,9 @@ public class LDTParser {
                 throw new NuxeoException(e);
             }
         }
-        
+
         // Not found. And no exception => most likely invalid range/size.
-        if(StringUtils.isEmpty(recordStr)) {
+        if (StringUtils.isEmpty(recordStr)) {
             return null;
         }
 
@@ -290,20 +304,20 @@ public class LDTParser {
             }
 
             List<String> rawRecord = new ArrayList<>();
-            
+
             ArrayList<HeaderLine> headers = new ArrayList<HeaderLine>();
             // Assume we will always have at least one header
             HeaderLine header = parseRecordHeader(line, 1);
-            if(header == null) {
+            if (header == null) {
                 throw new NuxeoException("Malformed header line, no matching Pattern found for <" + line + ">");
             }
             rawRecord.add(line);
-            
+
             // Assume we have no more than 100 header lines...
-            for(int lineNumber = 2; lineNumber < 100; lineNumber++) {
+            for (int lineNumber = 2; lineNumber < 100; lineNumber++) {
                 line = it.nextLine();
                 header = parseRecordHeader(line, lineNumber);
-                if(header != null) {
+                if (header != null) {
                     headers.add(header);
                     rawRecord.add(line);
                 } else {
@@ -375,22 +389,22 @@ public class LDTParser {
         // byte[] utf8Bytes = line.getBytes("UTF-8");
         // totalBytesRead += utf8Bytes.length + lengthOfEOF;
         totalBytesRead += line.length() + lengthOfEOF;
-        
+
         ArrayList<HeaderLine> headers = new ArrayList<HeaderLine>();
         // Assume we will always have at least one header
         HeaderLine header = parseRecordHeader(line, 1);
-        if(header == null) {
+        if (header == null) {
             throw new NuxeoException("Malformed header line, no matching Pattern found for <" + line + ">");
         }
         headers.add(header);
-        
+
         // Assume we have no more than 100 header lines...
-        for(int lineNumber = 1; lineNumber < 100; lineNumber++) {
+        for (int lineNumber = 1; lineNumber < 100; lineNumber++) {
             line = it.nextLine();
             lineCount += 1;
             totalBytesRead += line.length() + lengthOfEOF;
             header = parseRecordHeader(line, lineNumber);
-            if(header != null) {
+            if (header != null) {
                 headers.add(header);
             } else {
                 break;
