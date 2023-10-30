@@ -19,6 +19,8 @@
  */
 package nuxeo.ldt.parser.service.elements;
 
+import java.util.ArrayList;
+
 /**
  * RecordInfo is useful during the initial parsing of the ldt file.
  * It stores information about the record, but not the whole rerocd itseld:
@@ -35,17 +37,14 @@ public class RecordInfo {
 
     public long startLine;
 
-    public MainLine line1;
+    ArrayList<HeaderLine> headers;
 
-    public MainLine line2;
-
-    public RecordInfo(long startOffset, long size, long startLine, MainLine line1, MainLine line2) {
+    public RecordInfo(long startOffset, long size, long startLine, ArrayList<HeaderLine> headers) {
 
         this.startOffset = startOffset;
         this.size = size;
         this.startLine = startLine;
-        this.line1 = line1;
-        this.line2 = line2;
+        this.headers = headers;
     }
 
     public String toString() {
@@ -53,17 +52,21 @@ public class RecordInfo {
         String str = "{";
         str += "\"startOffset\": " + startOffset + ",";
         str += "\"size\": " + size + ",";
-        str += "\"line1\": \"" + line1.toString() + "\",";
-        str += "\"line2\": \"" + line2.toString() + "\"";
+        str += "\"line1\": \"" + headers.toString() + "\"";
         str += "}";
 
         return str;
     }
 
     public String getValue(String key) {
-        String value = line1.fieldsAndValues.get(key);
-        if (value == null) {
-            value = line2.fieldsAndValues.get(key);
+        
+        String value = null;
+        
+        for(HeaderLine header : headers) {
+            value = header.getValue(key);
+            if(value != null) {
+                return value;
+            }
         }
 
         return value;

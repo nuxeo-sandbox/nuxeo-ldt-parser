@@ -48,6 +48,7 @@ import org.nuxeo.runtime.test.runner.TransactionalFeature;
 
 import nuxeo.ldt.parser.automation.LDTParseAndCreateStatementsOp;
 import nuxeo.ldt.parser.service.descriptors.LDTParserDescriptor;
+import nuxeo.ldt.parser.service.LDTParser;
 import nuxeo.ldt.parser.service.LDTParserService;
 
 import javax.inject.Inject;
@@ -115,22 +116,15 @@ public class TestLDTParserOnDocument {
         // ======================================================================
 
         // If we are here, we know things were created at the correct place
-        LDTParserDescriptor desc = ldtParserService.getDescriptor(null);
+        LDTParser parser = ldtParserService.newParser(null);
+        LDTParserDescriptor desc = parser.getDescriptor();
         String pathStr = "/" + LDT_DOC_NAME + desc.getRecordsContainerSuffix();
         PathRef recordsFolderRef = new PathRef(pathStr);
         assertTrue(coreSession.exists(recordsFolderRef));
 
-        /*
-         * DocumentModelList tempDocs = coreSession.query("SELECT * FROM " + desc.getRecordDocType());
-         * for (DocumentModel oneDoc : tempDocs) {
-         * System.out.println("FOUND: " + oneDoc.getTitle());
-         * System.out.println("\n" + LDTParser.documentToJsonString(oneDoc, null));
-         * }
-         */
-
         // Just check one, as expected in the test ldt file.
         // (we test the second entry in the test.LDT file)
-        // Se used the fields defined in the "default" contribution. taxId is in dc:format,
+        // We used the fields defined in the "default" contribution. taxId is in dc:format,
         // client id in dc:description, etc.
         String nxql = "SELECT * FROM " + desc.getRecordDocType() + " WHERE dc:format = '12345678901567'";
         nxql += " AND dc:description = '9874567890ABC12'";

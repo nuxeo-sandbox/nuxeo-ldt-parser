@@ -66,7 +66,7 @@ public class LDT2JSONConverter implements Converter {
         long startOffset = Long.parseLong(startOffsetStr);
         long recordSize = Long.parseLong(recordSizeStr);
 
-        LDTParser parser = Framework.getService(LDTParserService.class).getParser(parserName);
+        LDTParser parser = Framework.getService(LDTParserService.class).newParser(parserName);
         Record record = parser.getRecord(blobHolder.getBlob(), startOffset, recordSize);
 
         try {

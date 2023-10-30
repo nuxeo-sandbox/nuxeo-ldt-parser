@@ -79,19 +79,10 @@ public class LDTParserServiceImpl extends DefaultComponent implements LDTParserS
     }
 
     @Override
-    public LDTParser getParser(String name) {
+    public LDTParser newParser(String name) {
         if(StringUtils.isBlank(name)) {
             name = "default";
         }
         return new LDTParser(contributions.get(name));
-    }
-
-    @Override
-    public LDTParserDescriptor getDescriptor(String name) {
-        if(StringUtils.isBlank(name)) {
-            name = "default";
-        }
-        
-        return contributions.get(name);
     }
 }

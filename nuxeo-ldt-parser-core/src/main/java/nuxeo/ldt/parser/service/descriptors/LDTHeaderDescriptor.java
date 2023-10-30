@@ -20,6 +20,7 @@ package nuxeo.ldt.parser.service.descriptors;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import org.nuxeo.common.xmap.annotation.XNode;
 import org.nuxeo.common.xmap.annotation.XNodeList;
@@ -30,8 +31,10 @@ import org.nuxeo.common.xmap.annotation.XObject;
  * 
  * @since 2021
  */
-@XObject("itemLine")
-public class LDTHeaderLineDescriptor {
+@XObject("header")
+public class LDTHeaderDescriptor {
+    
+    protected Pattern compiledPattern = null;
    
     @XNode("name")
     protected String name = null;
@@ -48,6 +51,15 @@ public class LDTHeaderLineDescriptor {
     
     public String getPattern() {
         return pattern;
+    }
+    
+    public Pattern getCompiledPattern() {
+        
+        if(compiledPattern == null) {
+            compiledPattern = Pattern.compile(pattern);
+        }
+        
+        return compiledPattern;
     }
     
     public List<String> getFields() {

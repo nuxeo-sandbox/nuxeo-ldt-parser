@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
-<!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-     IMPORTANT
-     * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-     DO not format this file (do not select all/command-F because you
+<!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+     IMPORTANT    IMPORTANT    IMPORTANT    IMPORTANT    IMPORTANT
+     * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+     Do not format this file (do not select all/command-F because you
      don't want lines to be added to your Regex patterns.-->
 <component name="nuxeo.ldt.parser.service.LDTParser">
 
@@ -22,24 +22,50 @@
 		<ldtParser>
 			<!-- This is the default parser. -->
 			<!-- WARNING: It is used here and there in unit test, do not change it -->
-			<!-- Which means, do not change it _here_, you can of course (and should) override it in your custom controbution. -->
+			<!-- Which means, do not change it _here_, you can of course (and should) override it in your custom contribution. -->
 			<name>default</name>
-			<!-- Not used (yet)
-			<class>nuxeo.ldt.parser.service.LDTParser</class>
-			-->
+
 			<!-- ================================================== -->
 			<!-- PARSING -->
 			<!-- ================================================== -->
-			<!-- Values will be very specific to each implementation.
+      
+            <!-- If ignoreMalformedLines is true, when parsing/regex fails, the
+            record is just ignored. Else, an error is thrown and the process
+            stops
+            Notice that if true, it means the parsed line or record is set to null,
+            which may lead to issues later in the code, of course-->
+            <ignoreMalformedLines>true</ignoreMalformedLines>
+      
+			<!-- The parser identifies a record when a line contains one of these token.
+                 A record starts at recordStartToken and ends at recordEndToken
+                 Values will be very specific to each implementation.
                  These values are used in unit tests, mainly -->
 			<recordStartToken>$12345ABCD$</recordStartToken>
 			<recordEndToken>CLOSING BALANCE    </recordEndToken>
+      
+            <!-- If true, the parser does not parse headers but calls the callback with
+                 the Callbacks#parseHeader callback.
+                 This is to be used when a Regex cannot resolve lines and you need to search
+                 for terms (like indexOf()), or when the same line can hold different Regex.
+                  -->
+            <useCallbackForHeaders>false</useCallbackForHeaders>
+            <!-- If true, the parser does not parse items but calls the callback with the Callbacks#parseItem callback -->
+            <useCallbackForItems>false</useCallbackForItems>
+            <!-- An example of callback -->
+            <callbacksClass>nuxeo.ldt.parser.service.CallbacksExample</callbacksClass>
 			
-			<!-- Order is important -->
+            <!-- ================================================== -->
+            <!-- PARSING HEADERS -->
+            <!-- ================================================== -->
+			<!-- Order is important, lines will be parsed, and headers checked one after the other -->
+            <!-- Also, the parser assumes there is at least one header (which holds the recordStartToken) -->
 			<headers>
 				<header>
+                    <!-- Make sure your first line starts with recordStartToken -->
 					<name>firstLine</name>
+                    <!-- WARNING: Do not format this in eclipse (command-F), we don't want a line -->
 					<pattern>^\$12345ABCD\$ *TYPE=(BANK.{4}) *CLIENT TYPE: *([a-zA-Z]) *TAX ID: *([A-Z0-9]*) *CLIENT ID: *([A-Z0-9]*)</pattern>
+                    <!-- fields MUST BE same number and order as the pattern groups captured above -->
 					<fields>
 						<field>bankType</field>
 						<field>clientType</field>
@@ -50,7 +76,12 @@
 				
 				<header>
 					<name>secondLine</name>
+                    <!-- WARNING: Do not format this in eclipse (command-F), we don't want a line -->
+                    <!-- Bank ID, Client Name, month-year, custom ref
+                         Example: 003090         John & Marie DOE          MARCH-2023      AB8765432
+                         So here we capture 5 groups -->
 					<pattern>^([A-Z0-9]*) *(.*?) *(JANUARY|FEBRUARY|MARCH|APRIL|MAY|JUNE|JULY|AUGUST|SEPTEMBER|OCTOBER|NOVEMBER|DECEMBER)-(\d{4}) *([A-Z0-9]*)</pattern>
+                    <!-- fields MUST BE same number and order as the pattern groups captured above -->
 					<fields>
 						<field>bankId</field>
 						<field>clientName</field>
@@ -61,38 +92,9 @@
 				</header>
 			</headers>
 			
-			<!-- Example of first line -->
-			<!-- $12345ABCD$    TYPE=BANK0003  CLIENT TYPE: F     TAX ID: 12345678901234    CLIENT ID: 1234567890ABC12 -->
-			<!-- WARNING: Do not format this in eclipse (command-F), we don't want a line -->
-			<patternLine1>^\$12345ABCD\$ *TYPE=(BANK.{4}) *CLIENT TYPE: *([a-zA-Z]) *TAX ID: *([A-Z0-9]*) *CLIENT ID: *([A-Z0-9]*)</patternLine1>
-			<!-- MUST BE same order as the pattern groups captured above -->
-			<fieldsLine1>
-				<field>bankType</field>
-				<field>clientType</field>
-				<field>taxId</field>
-				<field>clientId</field>
-			</fieldsLine1>
-			<!-- Bank ID, Client Name, month-year, custom ref
-			     Example: 003090         John & Marie DOE          MARCH-2023      AB8765432
-			     So here we capture 5 groups -->
-			<patternLine2>^([A-Z0-9]*) *(.*?) *(JANUARY|FEBRUARY|MARCH|APRIL|MAY|JUNE|JULY|AUGUST|SEPTEMBER|OCTOBER|NOVEMBER|DECEMBER)-(\d{4}) *([A-Z0-9]*)</patternLine2>
-			<!-- MUST BE same order as the pattern groups -->
-			<fieldsLine2>
-				<field>bankId</field>
-				<field>clientName</field>
-				<field>month</field>
-				<field>year</field>
-				<field>customRef</field>
-			</fieldsLine2>
-			<!-- If ignoreMalformedLines is true, when parsing/regex fails, the
-			record is just ignored. Else, an error is thrown and the process
-			stops. -->
-			<ignoreMalformedLines>true</ignoreMalformedLines>
-			
-			<!-- If true, the parser does not parse items but calls the callbakc with the Callbacks#parseItem callback -->
-			<useCallbackForItems>false</useCallbackForItems>
-			<callbacksClass>nuxeo.ldt.parser.service.CallbacksExample</callbacksClass>
-			
+            <!-- ================================================== -->
+            <!-- PARSING ITEMS -->
+            <!-- ================================================== -->
 			<!-- In this default parser, we define lines for a bank statement -->
 			<itemLine>
 				<!-- 01/12     OPENING BALANCE   1234.65 -->
@@ -161,8 +163,8 @@
 			use a custom one, make sure to add the "LDTRecord" facet (that comes with the
 			ldtrecord schema) -->
 			<recordDocType>LDTRecord</recordDocType>
-			<!-- You can map an XPATH from your custom recordDocType to a field
-			in lines 1-2. Make sure to use the exact same field names-->
+			<!-- You can map XPATHs from your custom recordDocType to fields
+			     in headers. Make sure to use the exact same field names-->
 			<!-- WARNING - WARNING - WARNING - WARNING - WARNING -->
 			<!-- All fields are supposed to be String, no conversion is made -->
 			<recordFieldsMapping>
@@ -172,15 +174,15 @@
 				<field xpath="statement:month">month</field>
 				<field xpath="statement:year">year</field>
 				-->
-				<!-- For default and used in unit test we use common fields that
-				don't have validation rules' -->
+				<!-- For default and usage in unit test we use common fields that
+				     don't have validation rules' -->
 				<field xpath="dc:description">clientId</field>
 				<field xpath="dc:format">taxId</field>
 				<field xpath="dc:source">month</field>
 				<field xpath="dc:rights">year</field>
 			</recordFieldsMapping>
 			<!-- Records are created in a Folder at same level than the source
-			LDT document. This should be changed later with mmore configuration-->
+			LDT document. This should be changed later with more configuration-->
 			<!--
 			<createRecordsContainerPath>SAME_AS_SOURCE_LDT_DOC</createRecordsContainerPath>
 			-->
@@ -189,30 +191,30 @@
 			<recordsContainerDocType>Folder</recordsContainerDocType>
 			
 			<!-- The recordsdContainer is created with the same name than the
-			source LDT, plus a suffix -->
+			     source LDT, plus a suffix -->
 			<recordsContainerSuffix>-Records</recordsContainerSuffix>
 			
 			<!-- Title for each record document. Default will just be the source
-			LDT title + "-" + record number -->
-			<!-- fields must already existing among fieldsLine1/fieldsLine2
-			and will be concatenated with "-" -->
+			     LDT title + "-" + record number -->
+			<!-- fields must already exist among headers and will be concatenated with "-" -->
 			<!-- If this is not empty, it builds the title. Here, title will
-			would be {clientId}-{taxId} -->
+			     would be {clientId}-{taxId} -->
 			<recordTitleFields>
 				<field>clientId</field>
 				<field>taxId</field>
 			</recordTitleFields>
 
-			<!-- When parsing and loading a record, beyond the 2 first main
-			lines, we have the content, typically a list of things (for a
-			statement, lines with label, credit denit etc.). This is the minimal size for
-			a line. Under this size, it is ignored	-->
+			<!-- When parsing and loading a record, beyond the header lines,
+			     we have the content, typically a list of things (for a statement,
+                 lines with label, credit debit etc.). This is the minimal size for
+			     a line. Under this size, it is ignored (because your LDT generator
+                 may add empty lines -->
 			<detailsLineMinSize>60</detailsLineMinSize>
 			
 			<!-- When exporting a record, which fields to return -->
 			<recordJsonTemplate>
 				<!-- Label of the root element -->
-				<!-- Can be ignored or null. If not null, the Hson will be like:
+				<!-- Can be ignored or null. If not null, the JSON will be like:
 				    {
 				      "record": {
 				        . . . properties . . .
@@ -225,11 +227,11 @@
 				     }
 				 -->
 				<rootName>record</rootName>
-				<!-- All the "Main" fields to store, not the list of items. They must of course have been defined above -->
+				<!-- All the header fields to store, not the list of items. They must of course have been defined above -->
 				<properties>
-					<!-- In this default-example, we use same fields as in fieldsLine1 and fieldsLine -->
+					<!-- In this default-example, we use same fields as in headers/header list -->
 					<!-- Special name: "ALL_MAIN_LINE". If you have property name="ALL_MAIN_LINE",
-					     then we export all the fields on MainLine 1 and 2, using the field names as propertis -->
+					     then we export all the fields on MainLine 1 and 2, using the field names as properties -->
 					<property>bankType</property>
 					<property>clientType</property>
 					<property>taxId</property>

@@ -28,8 +28,8 @@ public class TestLDTParser {
     }
     
     @Test
-    public void hadDefaultParser() {
-        LDTParser parser = ldtParserService.getParser(null);
+    public void hasDefaultParser() {
+        LDTParser parser = ldtParserService.newParser(null);
         assertNotNull(parser);
     }
 }

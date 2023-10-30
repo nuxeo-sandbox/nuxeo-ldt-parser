@@ -95,7 +95,20 @@ public class Item {
     }
 
     public String toString() {
-        return line;
+        StringBuilder str = new StringBuilder("Line:\n");
+        str.append(line)
+           .append("\nType: ")
+           .append(type)
+           .append("\nfieldsAndValues:\n");
+        for (Map.Entry<String, String> entry : fieldsAndValues.entrySet()) {
+            str.append("  ")
+               .append(entry.getKey())
+               .append(": ")
+               .append(entry.getValue())
+               .append("\n");
+        }
+        
+        return str.toString();
     }
 
     public String getLine() {

@@ -18,20 +18,19 @@
  */
 package nuxeo.ldt.parser.service;
 
+import nuxeo.ldt.parser.service.descriptors.LDTParserDescriptor;
+import nuxeo.ldt.parser.service.elements.HeaderLine;
 import nuxeo.ldt.parser.service.elements.Item;
 
 /**
+ * TOTO explain the class and don't forget about the usage of the LDTParserDescriptor parameter
  * 
- * @since TODO
+ * @since 2021
  */
 public interface Callbacks {
-  
-    Item parseItem (String line);
-    /*
-    static Item parseItem (String line) {
-        // TODO Auto-generated method stub
-        // return null;
-        throw new UnsupportedOperationException();
-    }
-*/
+
+    HeaderLine parseHeader(LDTParserDescriptor config, String line, long lineNumber);
+
+    Item parseItem(LDTParserDescriptor config, String line);
+
 }

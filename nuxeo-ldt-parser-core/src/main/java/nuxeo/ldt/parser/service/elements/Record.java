@@ -19,6 +19,7 @@
  */
 package nuxeo.ldt.parser.service.elements;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -43,33 +44,22 @@ public class Record {
     
     LDTParser parser;
 
-    @JsonProperty("line1")
-    protected MainLine line1;
-
-    @JsonProperty("line2")
-    protected MainLine line2;
+    @JsonProperty("headers")
+    protected ArrayList<HeaderLine> headers;
 
     @JsonProperty("items")
     protected List<Item> items;
 
-    public Record(LDTParser parser, MainLine line1, MainLine line2, List<Item> items) {
+    public Record(LDTParser parser, ArrayList<HeaderLine> headers, List<Item> items) {
         this.parser = parser;
-        
-        this.line1 = line1;
-        this.line2 = line2;
+        this.headers = headers;
         this.items = items;
     }
 
     public String toJson() throws JacksonException {
-        // @TODO - tune all this, allows for sending a "proper" json, not all in a raw
-        /*
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.configure(SerializationFeature.WRAP_ROOT_VALUE, true);
-        String json = objectMapper.writeValueAsString(this);
-        */
         
-        LDTRecordJsonTemplateDescriptor desc = parser.getDescriptor().getRecordJsonTemplate();
-        String rootName = desc.getRootName();
+        LDTRecordJsonTemplateDescriptor templateDescriptor = parser.getDescriptor().getRecordJsonTemplate();
+        String rootName = templateDescriptor.getRootName();
         JSONObject mainJson;
         mainJson = new JSONObject();
         JSONObject rootObject;
@@ -80,13 +70,14 @@ public class Record {
             rootObject = mainJson;
         }
         
-        for(String field : desc.getProperties()) {
-            rootObject.put(field, getMainLinesValue(field));
+        for(String field : templateDescriptor.getProperties()) {
+            rootObject.put(field, getHeadersValue(field));
         }
         
         // Now the items
         JSONArray jsonItems = new JSONArray();
         for(Item item : items) {
+            
             JSONObject oneJsonItem = new JSONObject();
             oneJsonItem.put("type", item.getType());
             oneJsonItem.put("line", item.getLine());
@@ -101,16 +92,15 @@ public class Record {
         return mainJson.toString();
     }
 
-    public String getMainLinesValue(String key) {
+    public String getHeadersValue(String key) {
 
         String value = null;
-
-        if (line1 != null) {
-            value = line1.getValue(key);
-        }
-
-        if (value == null && line2 != null) {
-            value = line2.getValue(key);
+        
+        for(HeaderLine header : headers) {
+            value = header.getValue(key);
+            if(value != null) {
+                return value;
+            }
         }
 
         return value;
@@ -118,6 +108,26 @@ public class Record {
 
     public List<Item> getItems() {
         return items;
+    }
+    
+    public String toString() {
+        
+        StringBuilder builder = new StringBuilder();
+        
+        for(HeaderLine header : headers) {
+            builder.append("Header:\n")
+                   .append(header.toString())
+                   .append("\n");
+        }
+        
+        builder.append("\nItems: ")
+               .append(items.size())
+               .append("\n");
+        for(Item item : items) {
+            builder.append(item.toString());
+        }
+        
+        return builder.toString();
     }
 
 }

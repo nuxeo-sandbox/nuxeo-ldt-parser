@@ -52,36 +52,11 @@ public class LDTParserDescriptor {
     @XNode("recordEndToken")
     protected String recordEndToken = null;
 
-    // @XNode("useCallback")
-    // protected Boolean useCallback;
+    @XNode("useCallbackForHeaders")
+    protected Boolean useCallbackForHeaders = false;
     
-    
-    // ================================ TEST
-    @XNodeList(value = "headers", type = LDTHeaderLineDescriptor.class, componentType = LDTHeaderLineDescriptor.class)
-    public LDTItemDescriptor headers;
-    // ================================ TEST
-    
-    public LDTItemDescriptor getHeaders() {
-        return headers;
-    }
-
-    @XNode("patternLine1")
-    protected String patternLine1 = null;
-
-    @XNode("altPatternLine1")
-    protected String altPatternLine1 = null;
-
-    @XNodeList(value = "fieldsLine1/field", type = ArrayList.class, componentType = String.class)
-    protected List<String> fieldsLine1 = new ArrayList<>();
-
-    @XNode("patternLine2")
-    protected String patternLine2 = null;
-
-    @XNode("altPatternLine2")
-    protected String altPatternLine2 = null;
-
-    @XNodeList(value = "fieldsLine2/field", type = ArrayList.class, componentType = String.class)
-    protected List<String> fieldsLine2 = new ArrayList<>();
+    @XNodeList(value = "headers/header", type = LDTHeaderDescriptor[].class, componentType = LDTHeaderDescriptor.class)
+    protected LDTHeaderDescriptor[] headers;
 
     @XNode("useCallbackForItems")
     protected Boolean useCallbackForItems = false;
@@ -132,46 +107,24 @@ public class LDTParserDescriptor {
         return recordEndToken;
     }
 
-    public String getPatternLine1() {
-        return patternLine1;
+    public boolean useCallbackForHeaders() {
+        return useCallbackForHeaders.booleanValue();
+    }
+    
+    public LDTHeaderDescriptor[] getHeaders() {
+        return headers;
     }
 
-    public String getAltPatternLine1() {
-        return altPatternLine1;
-    }
-
-    public List<String> getFieldsLine1() {
-        return fieldsLine1;
-    }
-
-    public String getPatternLine2() {
-        return patternLine2;
-    }
-
-    public String getAltPatternLine2() {
-        return altPatternLine2;
-    }
-
-    public List<String> getFieldsLine2() {
-        return fieldsLine2;
-    }
-
-    public List<String> getAllLinefields() {
-        List<String> mergedList = null;
-
-        if (fieldsLine1 != null) {
-            mergedList = new ArrayList<>(fieldsLine1);
+    public List<String> getAllHeaderfields() {
+        
+        List<String> finalList = new ArrayList<String>();
+        
+        for(LDTHeaderDescriptor headerDesc : headers) {
+            List<String> mergedList = new ArrayList<String>(headerDesc.getFields());
+            finalList.addAll(mergedList);
         }
 
-        if (fieldsLine2 != null) {
-            if (mergedList == null) {
-                mergedList = new ArrayList<>(fieldsLine2);
-            } else {
-                mergedList.addAll(fieldsLine2);
-            }
-        }
-
-        return mergedList;
+        return finalList;
     }
 
     public boolean useCallbackForItems() {

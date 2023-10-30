@@ -24,9 +24,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import nuxeo.ldt.parser.service.descriptors.LDTHeaderDescriptor;
 import nuxeo.ldt.parser.service.descriptors.LDTParserDescriptor;
+import nuxeo.ldt.parser.service.elements.HeaderLine;
 import nuxeo.ldt.parser.service.elements.Item;
-import nuxeo.ldt.parser.service.elements.MainLine;
 import nuxeo.ldt.parser.service.elements.Record;
 import nuxeo.ldt.parser.service.elements.RecordInfo;
 
@@ -64,7 +65,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -84,26 +84,6 @@ public class LDTParser {
 
     protected String recordEndToken;
 
-    protected String patternLine1Str;
-
-    protected Pattern patternLine1;
-
-    protected String altPatternLine1Str;
-
-    protected Pattern altPatternLine1 = null;
-
-    protected List<String> fieldsLine1;
-
-    protected String patternLine2Str;
-
-    protected Pattern patternLine2;
-
-    protected String altPatternLine2Str;
-
-    protected Pattern altPatternLine2 = null;
-
-    protected List<String> fieldsLine2;
-
     protected Callbacks callbacks = null;
 
     protected int lengthOfEOF;
@@ -119,18 +99,8 @@ public class LDTParser {
         this.name = config.getName();
         this.recordStartToken = config.getRecordStartToken();
         this.recordEndToken = config.getRecordEndToken();
-        this.patternLine1 = Pattern.compile(config.getPatternLine1());
-        if (StringUtils.isNotBlank(config.getAltPatternLine1())) {
-            this.altPatternLine1 = Pattern.compile(config.getAltPatternLine1());
-        }
-        this.fieldsLine1 = config.getFieldsLine1();
-        this.patternLine2 = Pattern.compile(config.getPatternLine2());
-        if (StringUtils.isNotBlank(config.getAltPatternLine2())) {
-            this.altPatternLine2 = Pattern.compile(config.getAltPatternLine2());
-        }
-        this.fieldsLine2 = config.getFieldsLine2();
 
-        if (config.useCallbackForItems()) {
+        if (config.useCallbackForItems() || config.useCallbackForHeaders()) {
             loadCallbacksClass();
         }
     }
@@ -147,6 +117,17 @@ public class LDTParser {
             callbacks = null;
         }
     }
+    
+    protected Callbacks getCallbacks() {
+        if (config.useCallbackForItems()) {
+            if (callbacks == null) { // Can happen when LDTParserDescriptor#setUseCallbackForItems is changed
+                loadCallbacksClass();
+            }
+        } else {
+            callbacks = null;
+        }
+        return callbacks;
+    }
 
     public LDTParserDescriptor getDescriptor() {
         return config;
@@ -159,79 +140,70 @@ public class LDTParser {
     public boolean isRecordEnd(String line) {
         return line.indexOf(recordEndToken) > -1;
     }
-
-    public MainLine parseRecordFirstLine(String line) {
-        Matcher m = patternLine1.matcher(line);
-        if (m.matches()) {
-            return new MainLine(m, fieldsLine1);
+    
+    public HeaderLine parseRecordHeader(String line, long lineNumber) {
+        
+        if (getCallbacks() != null) {
+            return callbacks.parseHeader(config, line, lineNumber);
         }
-
-        log.info("patternLine1 not found, searching for altPatternLine1");
-        if (altPatternLine1 != null) {
-            m = altPatternLine1.matcher(line);
+        
+        for (LDTHeaderDescriptor header : config.getHeaders()) {
+            Matcher m = header.getCompiledPattern().matcher(line);
             if (m.matches()) {
-                return new MainLine(m, fieldsLine1);
+                return new HeaderLine(m, header.getFields(), lineNumber);
             }
         }
-
-        throw new NuxeoException("malformed record first line " + line);
-    }
-
-    public MainLine parseRecordSecondLine(String line) {
-
-        Matcher m = patternLine2.matcher(line);
-        if (m.matches()) {
-            return new MainLine(m, fieldsLine2);
-        }
-
-        log.info("patternLine2 not found, searching for altPatternLine2");
-        if (altPatternLine2 != null) {
-            m = altPatternLine2.matcher(line);
-            if (m.matches()) {
-                return new MainLine(m, fieldsLine2);
-            }
-        }
-
-        // If we are here, it means we did not find a valid pattern. We give up
-        if (config.ignoreMalformedLines()) {
-            log.warn("IGNORED Malformed/Unexpected group(s) in second line of record <" + line + ">");
-            return null;
-        }
-
-        throw new NuxeoException("malformed record second line " + line);
+        
+        return null;
+        
     }
 
     public Item parseItem(String line) {
         
         //System.out.println("PARSE ITEM: <" + line + ">");
 
-        if (config.useCallbackForItems()) {
-            if (callbacks == null) { // Can happen when LDTParserDescriptor#setUseCallbackForItems is changed
-                loadCallbacksClass();
-            }
-            return callbacks.parseItem(line);
+        if (getCallbacks() != null) {
+            return callbacks.parseItem(config, line);
         }
 
         if (config.getDetailsLineMinSize() > 0 && line.length() < config.getDetailsLineMinSize()) {
-            System.out.println("LESS THAN MINIMAL LENGTH: " + line);
+            //System.out.println("LESS THAN MINIMAL LENGTH: " + line);
             return null;
         }
 
         return new Item(line, config);
     }
-
+    
     public Record parseRecord(List<String> lines) {
-        MainLine firstLine = parseRecordFirstLine(lines.get(0));
-        MainLine secondLine = parseRecordSecondLine(lines.get(1));
-        if (secondLine == null) { // This was a malformed second line
-            return null;
+        
+        int idx = -1;
+        ArrayList<HeaderLine> headers = new ArrayList<HeaderLine>();
+        // A record always starts with at least one header line
+        for(String oneLine : lines) {
+            HeaderLine header = parseRecordHeader(oneLine, idx + 2);
+            if(header != null) {
+                headers.add(header);
+                idx += 1;
+            } else {
+                // If we are at the first line then we have an issue.
+                if(idx == -1) {
+                    if (config.ignoreMalformedLines()) {
+                        log.warn("IGNORED Malformed/Unexpected group(s) in headers (no header found) for line <" + oneLine + ">");
+                        return null;
+                    }
+                    throw new NuxeoException("Malformed header line, no matching Pattern found for <" + oneLine + ">");
+                    
+                }
+                break;
+            }
         }
-        List<Item> listItems = lines.subList(2, lines.size())
+        
+        List<Item> listItems = lines.subList(idx + 1, lines.size())
                                     .stream()
                                     .map(this::parseItem)
                                     .filter(Objects::nonNull)
                                     .collect(Collectors.toList());
-        return new Record(this, firstLine, secondLine, listItems);
+        return new Record(this, headers, listItems);
     }
 
     public Record getRecord(Blob blob, long startOffset, long recordSize) {
@@ -318,20 +290,28 @@ public class LDTParser {
             }
 
             List<String> rawRecord = new ArrayList<>();
-
-            @SuppressWarnings("unused")
-            MainLine firstLine = parseRecordFirstLine(line);
-            String second = it.nextLine();
-            MainLine secondLine = parseRecordSecondLine(second);
-            if (secondLine == null) { // This was a malformed second line
-                return null;
+            
+            ArrayList<HeaderLine> headers = new ArrayList<HeaderLine>();
+            // Assume we will always have at least one header
+            HeaderLine header = parseRecordHeader(line, 1);
+            if(header == null) {
+                throw new NuxeoException("Malformed header line, no matching Pattern found for <" + line + ">");
             }
-            // if (firstLine.clientId.equals(clientId) && firstLine.taxId.equals(taxId) &&
-            // secondLine.month.equals(month)
-            // && secondLine.year.equals(year)) {
-
             rawRecord.add(line);
-            rawRecord.add(second);
+            
+            // Assume we have no more than 100 header lines...
+            for(int lineNumber = 2; lineNumber < 100; lineNumber++) {
+                line = it.nextLine();
+                header = parseRecordHeader(line, lineNumber);
+                if(header != null) {
+                    headers.add(header);
+                    rawRecord.add(line);
+                } else {
+                    rawRecord.add(line);
+                    break;
+                }
+            }
+
             boolean reachedEnd = false;
             while (!reachedEnd && it.hasNext()) {
                 String item = it.nextLine();
@@ -341,11 +321,6 @@ public class LDTParser {
                     rawRecord.add(item);
                 }
             }
-
-            // } else {
-            // throw new NuxeoException("Error parsing the lines: Record found at offset " + startOffset
-            // + " does not match the info (cllientId, taxId, month, year)");
-            // }
 
             return rawRecord.isEmpty() ? null : parseRecord(rawRecord);
 
@@ -379,7 +354,7 @@ public class LDTParser {
     }
 
     /*
-     * The it parameter MUST be positionned at the beginning of a record
+     * The it parameter MUST be positioned at the beginning of a record
      */
     protected RecordInfo getOneRecordInfo(LineIterator it) throws IOException {
 
@@ -400,22 +375,28 @@ public class LDTParser {
         // byte[] utf8Bytes = line.getBytes("UTF-8");
         // totalBytesRead += utf8Bytes.length + lengthOfEOF;
         totalBytesRead += line.length() + lengthOfEOF;
-
-        MainLine firstLine = parseRecordFirstLine(line);
-        // We assume there is a second line if the first is a recordStart.
-        String second = it.nextLine();
-        lineCount += 1;
-        // utf8Bytes = second.getBytes("UTF-8");
-        // totalBytesRead += utf8Bytes.length + lengthOfEOF;
-        totalBytesRead += second.length() + lengthOfEOF;
-        MainLine secondLine = parseRecordSecondLine(second);
-
-        // If second line was malformed, we still must continue to parse
-        // until the end of the statement, to cumulate line numbers and bytes read
-        // (then return null, so caller knows something went wrong)
-        if (secondLine == null) {
-            // (nothing)
+        
+        ArrayList<HeaderLine> headers = new ArrayList<HeaderLine>();
+        // Assume we will always have at least one header
+        HeaderLine header = parseRecordHeader(line, 1);
+        if(header == null) {
+            throw new NuxeoException("Malformed header line, no matching Pattern found for <" + line + ">");
         }
+        headers.add(header);
+        
+        // Assume we have no more than 100 header lines...
+        for(int lineNumber = 1; lineNumber < 100; lineNumber++) {
+            line = it.nextLine();
+            lineCount += 1;
+            totalBytesRead += line.length() + lengthOfEOF;
+            header = parseRecordHeader(line, lineNumber);
+            if(header != null) {
+                headers.add(header);
+            } else {
+                break;
+            }
+        }
+        // We catched the first itemLine above, but it's ok, there will be at least one item.
 
         while (it.hasNext()) {
             String moreLine = it.nextLine();
@@ -427,12 +408,9 @@ public class LDTParser {
                 break;
             }
         }
-        if (secondLine == null) {
-            return null;
-        }
 
         long recordSize = totalBytesRead - recordStart;
-        RecordInfo recInfo = new RecordInfo(recordStart, recordSize, lineStart, firstLine, secondLine);
+        RecordInfo recInfo = new RecordInfo(recordStart, recordSize, lineStart, headers);
 
         return recInfo;
 
@@ -576,14 +554,14 @@ public class LDTParser {
     }
 
     /**
-     * This is mainly a hepler for debug
+     * This is mainly a helper for debug
      * 
      * @param recordDoc
-     * @param parser can benull (will use "default")
+     * @param parser can be null (will use "default")
      * @return
      * @since TODO
      */
-    public static String documentToJsonString(DocumentModel recordDoc, String parser) {
+    public static String documentToJsonString(DocumentModel recordDoc, String parserName) {
         /*
          * Map<String, String> fields = new HashMap<String, String>();
          * fields.put(Constants.XPATH_LDTRECORD_STARTLINE,
@@ -611,7 +589,8 @@ public class LDTParser {
         objNode.put(Constants.XPATH_LDTRECORD_RECORDSIZE,
                 (long) recordDoc.getPropertyValue(Constants.XPATH_LDTRECORD_RECORDSIZE));
 
-        LDTParserDescriptor desc = Framework.getService(LDTParserService.class).getDescriptor(parser);
+        LDTParser parser = Framework.getService(LDTParserService.class).newParser(parserName);
+        LDTParserDescriptor desc = parser.getDescriptor();
         List<String> xpaths = desc.getLDTRecordXPaths();
         for (String xpath : xpaths) {
             objNode.put(xpath, "" + recordDoc.getPropertyValue(xpath));
