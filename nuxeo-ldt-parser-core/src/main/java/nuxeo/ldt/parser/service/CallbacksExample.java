@@ -55,13 +55,11 @@ public class CallbacksExample implements Callbacks {
                 // Here, we hard code the values (with no relation to line)
                 fieldList = Arrays.asList("ClientId", "TaxId");
                 fieldsAndValues = Map.of("ClientId", "12345", "TaxId", "67890");
-                name = "HEADER_1";
-                headers.add(new HeaderLine(fieldList, fieldsAndValues, lineNumber, name));
+                headers.add(new HeaderLine(fieldList, fieldsAndValues, lineNumber));
             } else if (line.indexOf("Some Token") > -1) {
-                name = "OTHER_HEADER";
                 fieldList = Arrays.asList("header2_field1", "header2_field2");
                 fieldsAndValues = Map.of("header2_field1", "ABCDEF", "header2_field2", "GHIJKL");
-                headers.add(new HeaderLine(fieldList, fieldsAndValues, lineNumber, name));
+                headers.add(new HeaderLine(fieldList, fieldsAndValues, lineNumber));
             } else {
                 // Not a header
                 // Still, check we do have at least one
@@ -114,7 +112,7 @@ public class CallbacksExample implements Callbacks {
             return null;
         } */
         
-        return new HeaderLine(fieldList, fieldsAndValues, lineNumber, name);
+        return new HeaderLine(fieldList, fieldsAndValues, lineNumber);
     }
 
     @Override

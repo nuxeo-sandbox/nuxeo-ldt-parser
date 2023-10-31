@@ -44,7 +44,7 @@ public class HeaderLine {
     
     protected long lineNumber;
     
-    public HeaderLine(List<String> fieldList, Map<String, String> fieldsAndValues, long lineNumber, String name) {
+    public HeaderLine(List<String> fieldList, Map<String, String> fieldsAndValues, long lineNumber) {
         this.fieldList = fieldList;
         this.fieldsAndValues = fieldsAndValues;
         this.lineNumber = lineNumber;

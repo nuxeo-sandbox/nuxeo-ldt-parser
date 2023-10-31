@@ -17,7 +17,7 @@ import javax.inject.Inject;
 @RunWith(FeaturesRunner.class)
 @Features({ PlatformFeature.class })
 @Deploy("nuxeo.ldt.parser.nuxeo-ldt-parser-core")
-public class TestLDTParser {
+public class TestLDTParserService {
 
     @Inject
     protected LDTParserService ldtParserService;

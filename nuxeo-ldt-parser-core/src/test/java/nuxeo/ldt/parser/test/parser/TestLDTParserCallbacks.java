@@ -77,5 +77,23 @@ public class TestLDTParserCallbacks {
         });
         
     }
+    
+    @Test
+    public void shouldUseCallbackForRecord() throws Exception {
+        
+        LDTParser parser = ldtParserService.newParser("test-callbacks-record");
+        assertNotNull(parser);
+        
+        // The callbacks hard code the values, whatever the input line(s)
+        Record record = parser.parseRecord(Arrays.asList("some line"));
+        assertNotNull(record);
+        
+        assertEquals("12345", record.getHeadersValue("HEADER"));
+        
+        List<Item> items = record.getItems();
+        assertEquals(1, items.size());
+        assertEquals("ITEM", items.get(0).getType());
+        assertEquals("1234.56", items.get(0).getValue("ITEM_VALUE"));
+    }
 
 }
