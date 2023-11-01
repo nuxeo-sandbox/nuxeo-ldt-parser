@@ -151,7 +151,7 @@ public class LDTParser {
     public HeaderLine parseRecordHeader(String line, long lineNumber) {
 
         if (config.useCallbackForHeaders()) {
-            return callbacks.parseHeader(config, line, lineNumber);
+            return getCallbacks().parseHeader(config, line, lineNumber);
         }
 
         for (LDTHeaderDescriptor header : config.getHeaders()) {
@@ -170,7 +170,7 @@ public class LDTParser {
         // System.out.println("PARSE ITEM: <" + line + ">");
 
         if (config.useCallbackForItems()) {
-            return callbacks.parseItem(config, line);
+            return getCallbacks().parseItem(config, line);
         }
 
         if (config.getDetailsLineMinSize() > 0 && line.length() < config.getDetailsLineMinSize()) {
@@ -184,7 +184,7 @@ public class LDTParser {
     public Record parseRecord(List<String> lines) {
 
         if (config.useCallbackForRecord()) {
-            Record rec = callbacks.parseRecord(config, lines);
+            Record rec = getCallbacks().parseRecord(config, lines);
             rec.setParser(this);
             return rec;
         }

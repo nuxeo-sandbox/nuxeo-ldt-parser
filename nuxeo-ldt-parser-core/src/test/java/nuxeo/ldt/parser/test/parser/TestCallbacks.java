@@ -30,20 +30,15 @@ import nuxeo.ldt.parser.service.elements.Item;
 import nuxeo.ldt.parser.service.elements.Record;
 
 /**
- * @since TODO
+ * This class returns hard coded values, ignoring the parameters,
+ * you can pass whatever line(s) you want, just look at this code
+ * to check you get the correct values
+ * This just shows the callback was correctly called.
+ * 
+ * @since 2021
  */
 public class TestCallbacks implements Callbacks {
 
-    public static final List<String> RECORD_LINES = Arrays.asList(
-            "RECORDSTART    CLIENT=12345    TAXID=67890",
-            "OPENING BALANCE       1234.56",
-            "ITEM blahblahblah      100.00",
-            "CLOSING BALANCE       1134.56");
-
-    /**
-     * Values are totally hard coded, you can pass whatever lines you want,
-     * just look at this code to check you get the correct values
-     */
     @Override
     public Record parseRecord(LDTParserDescriptor config, List<String> lines) {
         List<HeaderLine> headers = new ArrayList<HeaderLine>();
@@ -57,7 +52,7 @@ public class TestCallbacks implements Callbacks {
         HeaderLine header = new HeaderLine(fieldList, fieldsAndValues, 1);
         headers.add(header);
 
-        // HArd code a simple item
+        // Hard code a simple item
         fieldList = Arrays.asList("ITEM_VALUE");
         fieldsAndValues = Map.of("ITEM_VALUE", "1234.56");
         Item item = new Item("we do not care", "ITEM", fieldList, fieldsAndValues);
@@ -68,16 +63,19 @@ public class TestCallbacks implements Callbacks {
 
     @Override
     public HeaderLine parseHeader(LDTParserDescriptor config, String line, long lineNumber) {
-        // TODO Auto-generated method stub
-        // return null;
-        throw new UnsupportedOperationException();
+        List<String> fieldList = Arrays.asList("HEADER");
+        Map<String, String> fieldsAndValues = Map.of("HEADER", "12345");
+        
+        return new HeaderLine(fieldList, fieldsAndValues, lineNumber);
     }
 
     @Override
     public Item parseItem(LDTParserDescriptor config, String line) {
-        // TODO Auto-generated method stub
-        // return null;
-        throw new UnsupportedOperationException();
+
+        List<String> fieldList = Arrays.asList("ITEM_VALUE");
+        Map<String, String> fieldsAndValues = Map.of("ITEM_VALUE", "1234.56");
+        
+        return new Item(line, "ITEM", fieldList, fieldsAndValues);
     }
 
 }

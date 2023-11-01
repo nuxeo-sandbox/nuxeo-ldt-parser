@@ -165,6 +165,8 @@ public class TestLDTParser {
     protected void testParseBalanceItem(String line, String type, String lineCode, String date, String amout) {
 
         LDTParser parser = ldtParserService.newParser(null);
+        LDTParserDescriptor config = parser.getDescriptor();
+        config.setUseCallbackForItems(false);
         Item item = parser.parseItem(line);
 
         assertNotNull(item);
@@ -199,6 +201,8 @@ public class TestLDTParser {
 
         LDTParser parser = ldtParserService.newParser(null);
         Item item = parser.parseItem(line);
+        LDTParserDescriptor config = parser.getDescriptor();
+        config.setUseCallbackForItems(false);
 
         assertNotNull(item);
         assertEquals("ItemLine", item.getType());
@@ -241,6 +245,8 @@ public class TestLDTParser {
 
         LDTParser parser = ldtParserService.newParser(null);
         Record record = parser.parseRecord(lines);
+        LDTParserDescriptor config = parser.getDescriptor();
+        config.setUseCallbackForItems(false);
 
         assertNotNull(record);
         assertEquals("BANK0003", record.getHeadersValue("bankType"));

@@ -79,7 +79,7 @@ public class TestLDTParserCallbacks {
     }
     
     @Test
-    public void shouldUseCallbackForRecord() throws Exception {
+    public void shouldUseCallbackForRecord() {
         
         LDTParser parser = ldtParserService.newParser("test-callbacks-record");
         assertNotNull(parser);
@@ -94,6 +94,33 @@ public class TestLDTParserCallbacks {
         assertEquals(1, items.size());
         assertEquals("ITEM", items.get(0).getType());
         assertEquals("1234.56", items.get(0).getValue("ITEM_VALUE"));
+    }
+    
+    @Test
+    public void shouldUseCallbackFoHeader() {
+        
+        LDTParser parser = ldtParserService.newParser("test-callbacks-header");
+        assertNotNull(parser);
+        
+        HeaderLine header = parser.parseRecordHeader("some line", 3);
+        assertNotNull(header);
+        assertEquals(3, header.getLineNumber());
+        assertEquals("12345", header.getValue("HEADER"));
+        
+    }
+    
+    @Test
+    public void shouldUseCallbackFoItem() {
+        
+        LDTParser parser = ldtParserService.newParser("test-callbacks-item");
+        assertNotNull(parser);
+        
+        Item item = parser.parseItem("some line");
+        assertNotNull(item);
+        assertEquals("some line", item.getLine());
+        assertEquals("ITEM", item.getType());
+        assertEquals("1234.56", item.getValue("ITEM_VALUE"));
+        
     }
 
 }
