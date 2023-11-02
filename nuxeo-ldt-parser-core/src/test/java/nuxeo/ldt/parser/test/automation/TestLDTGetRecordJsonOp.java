@@ -23,7 +23,9 @@ import static org.junit.Assert.assertNotNull;
 
 import java.io.Serializable;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -76,6 +78,17 @@ public class TestLDTGetRecordJsonOp {
 
     @Inject
     protected LDTParserService ldtParserService;
+    
+    protected void checkReturnedJson(String jsonStr) {
+        
+        JSONObject json = new JSONObject(jsonStr);
+        JSONObject root = json.getJSONObject("record");
+        
+        assertEquals("9874567890ABC12", root.getString("clientId"));
+        assertEquals("MARCH", root.getString("month"));
+        JSONArray items = root.getJSONArray("items");
+        assertEquals(TestUtils.SIMPLELDT_RECORD2_ITEMS_COUNT, items.length());
+    }
 
     @Test
     public void shouldGetJsonRecord() throws Exception {
@@ -117,18 +130,21 @@ public class TestLDTGetRecordJsonOp {
         // ==============================
         OperationContext ctx = new OperationContext(coreSession);
         ctx.setInput(docs.get(0));
-        // No parameter, e use "default"
+        // No parameter, we use "default" parser and the signatire with an input document
         Blob jsonBlob = (JSONBlob) automationService.run(ctx, LDTGetRecordJsonOp.ID);
         assertNotNull(jsonBlob);
-        String jsonString = jsonBlob.getString();
-        // Conversion to JSON should be ok
-        JSONObject json = new JSONObject(jsonString);
-        JSONObject root = json.getJSONObject("record");
-        
-        assertEquals("9874567890ABC12", root.getString("clientId"));
-        assertEquals("MARCH", root.getString("month"));
-        JSONArray items = root.getJSONArray("items");
-        assertEquals(TestUtils.SIMPLELDT_RECORD2_ITEMS_COUNT, items.length());
+        checkReturnedJson(jsonBlob.getString());
 
+        // Test the signature with void as input and required parameters
+        ctx = new OperationContext(coreSession);
+        ctx.setInput(null);
+        Map<String, Object> params = new HashMap<>();
+        params.put("sourceLdtDocId", ldtDoc.getId());
+        params.put("startOffset", (long) TestUtils.SIMPLELDT_RECORD2_STARTOFFSET);
+        params.put("recordSize", (long) TestUtils.SIMPLELDT_RECORD2_RECORDSIZE);
+        jsonBlob = (JSONBlob) automationService.run(ctx, LDTGetRecordJsonOp.ID, params);
+        assertNotNull(jsonBlob);
+        checkReturnedJson(jsonBlob.getString());
+        
     }
 }

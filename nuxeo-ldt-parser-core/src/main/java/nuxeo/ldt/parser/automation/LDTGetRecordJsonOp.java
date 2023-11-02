@@ -35,11 +35,16 @@ import org.nuxeo.ecm.core.api.IdRef;
 import org.nuxeo.ecm.core.api.NuxeoException;
 import org.nuxeo.ecm.core.api.impl.blob.JSONBlob;
 
+import com.fasterxml.jackson.core.JacksonException;
+
 import nuxeo.ldt.parser.service.LDTParser;
 import nuxeo.ldt.parser.service.LDTParserService;
 import nuxeo.ldt.parser.service.elements.Record;
 
-@Operation(id = LDTGetRecordJsonOp.ID, category = Constants.CAT_DOCUMENT, label = "LDT: Get JSON record", description = "Input document  must have the ldtrecord schema, and the related LDT document must exist and current user must have read permission on it.")
+@Operation(id = LDTGetRecordJsonOp.ID, category = Constants.CAT_DOCUMENT, label = "LDT: Get JSON record", description = ""
+        + "If passed, Input document must have the ldtrecord schema, the related LDT document must exist, "
+        + "and current user must have read permission on it. Also, if passed, sourceLdtDocId/startOffset/recordSize are ignored."
+        + " If input is not passed, then sourceLdtDocId/startOffset/recordSize are required")
 public class LDTGetRecordJsonOp {
 
     public static final String ID = "Services.GetLDTJsonRecord";
@@ -55,6 +60,51 @@ public class LDTGetRecordJsonOp {
     @Param(name = "parserName", required = false, values = { "default" })
     protected String parserName = "default";
 
+    @Param(name = "sourceLdtDocId", required = false)
+    protected String sourceLdtDocId;
+
+    @Param(name = "startOffset", required = false)
+    protected Long startOffset;
+
+    @Param(name = "recordSize", required = false)
+    protected Long recordSize;
+
+    protected Blob getRecordJson(String ldtDocId, Long startOffset, Long recordSize) throws JacksonException {
+
+        if (StringUtils.isBlank(ldtDocId)) {
+            throw new IllegalArgumentException("No Source LDT document");
+        }
+
+        if (startOffset == null) {
+            throw new IllegalArgumentException("Missing startOffset parameter");
+        }
+
+        if (recordSize == null) {
+            throw new IllegalArgumentException("Missing recordSize parameter");
+        }
+
+        IdRef ref = new IdRef(ldtDocId);
+        DocumentModel ldtDoc = session.getDocument(ref);
+
+        Blob ldtBlob = (Blob) ldtDoc.getPropertyValue("file:content");
+        if (ldtBlob == null) {
+            throw new NuxeoException("The related LDT document (id " + ref + ") has no blob.");
+        }
+
+        LDTParser parser = ldtParserService.newParser(parserName);
+
+        Record record = parser.getRecord(ldtBlob, startOffset, recordSize);
+
+        String recordJsonStr = record.toJson();
+        return new JSONBlob(recordJsonStr);
+    }
+
+    @OperationMethod
+    public Blob run() throws Exception {
+
+        return getRecordJson(sourceLdtDocId, startOffset, recordSize);
+    }
+
     @OperationMethod
     public Blob run(DocumentModel input) throws IOException {
 
@@ -63,30 +113,17 @@ public class LDTGetRecordJsonOp {
             return null;
         }
 
-        String ldtDocId = (String) input.getPropertyValue(
+        sourceLdtDocId = (String) input.getPropertyValue(
                 nuxeo.ldt.parser.service.Constants.XPATH_LDTRECORD_RELATED_LDT_DOC);
-        if (StringUtils.isBlank(ldtDocId)) {
-            throw new NuxeoException("No related document containing an ldt file in its blob ("
-                    + nuxeo.ldt.parser.service.Constants.XPATH_LDTRECORD_RELATED_LDT_DOC + " is empty)");
-        }
-        
-        IdRef ref = new IdRef(ldtDocId);
-        DocumentModel ldtDoc = session.getDocument(ref);
-
-        Blob ldtBlob = (Blob) ldtDoc.getPropertyValue("file:content");
-        if (ldtBlob == null) {
-            throw new NuxeoException("The related document (id " + ref + ") has no blob.");
+        if (StringUtils.isBlank(sourceLdtDocId)) {
+            throw new NuxeoException(
+                    "" + nuxeo.ldt.parser.service.Constants.XPATH_LDTRECORD_RELATED_LDT_DOC + " is empty)");
         }
 
-        LDTParser parser = ldtParserService.newParser(parserName);
+        startOffset = (long) input.getPropertyValue(nuxeo.ldt.parser.service.Constants.XPATH_LDTRECORD_STARTOFFSET);
+        recordSize = (long) input.getPropertyValue(nuxeo.ldt.parser.service.Constants.XPATH_LDTRECORD_RECORDSIZE);
 
-        long startOfsset = (long) input.getPropertyValue(
-                nuxeo.ldt.parser.service.Constants.XPATH_LDTRECORD_STARTOFFSET);
-        long recordSize = (long) input.getPropertyValue(nuxeo.ldt.parser.service.Constants.XPATH_LDTRECORD_RECORDSIZE);
-        Record record = parser.getRecord(ldtBlob, startOfsset, recordSize);
-
-        String recordJsonStr = record.toJson();
-        return new JSONBlob(recordJsonStr);
+        return getRecordJson(sourceLdtDocId, startOffset, recordSize);
     }
 
 }
