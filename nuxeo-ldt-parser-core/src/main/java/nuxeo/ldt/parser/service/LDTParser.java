@@ -96,12 +96,12 @@ import java.util.stream.Collectors;
  * <li>When an LDT file is uploaded, either automatically (via listener) or "manualy", parse it and create as many
  * LDTRecord document type that needed, also using your custom fields (like a clientId, a taxId, …)<br>
  * This is done using {@code LDTParser#parseAndCreateStatements}, and/or the operation calling it
- * ({@link nuxeo.ldt.parser.automation.LDTParseAndCreateStatementsOp}<br>
+ * ({@link nuxeo.ldt.parser.automation.LDTParseAndCreateRecordsOp}<br>
  * Configuration lets you define the document type to use, the fields to map, etc., see ldtarser-service.xml
  * </li>
  * <li>When a record is needed, just call @{code LDTParser#getRecord}, and then @{code Record#toJson}. From this json,
  * you can render the record as you want (for example, using Nuxeo Template Rendering)<br>
- * The configuraiton lets you define the JSON properties you want (see recordJsonTemplate in ldtarser-service.xml)<br>
+ * The configuration lets you define the JSON properties you want (see recordJsonTemplate in ldtarser-service.xml)<br>
  * The plugin has an example using a converter. The converter gets the record as json, and uses Nuxeo Template Rendering
  * to generate a pdf. It firyts creates an HTML from the json, then uwe WebkitHtmlTopPDF to generate a pdf.
  * </li>
@@ -485,7 +485,7 @@ public class LDTParser {
      * @return
      * @since TODO
      */
-    public LDTInfo parseAndCreateStatements(DocumentModel inputLdtDoc) {
+    public LDTInfo parseAndCreateRecords(DocumentModel inputLdtDoc) {
 
         LDTInfo ldtInfo = null;
 
@@ -561,6 +561,7 @@ public class LDTParser {
 
                 DocumentModel recordDoc = session.createDocumentModel(parentPath, title, config.getRecordDocType());
                 recordDoc.setPropertyValue("dc:title", title);
+                recordDoc.setPropertyValue(Constants.XPATH_LDTRECORD_RELATED_LDT_DOC, inputLdtDoc.getId());
                 recordDoc.setPropertyValue(Constants.XPATH_LDTRECORD_STARTOFFSET, record.startOffset);
                 recordDoc.setPropertyValue(Constants.XPATH_LDTRECORD_RECORDSIZE, record.size);
                 recordDoc.setPropertyValue(Constants.XPATH_LDTRECORD_STARTLINE, record.startLine);

@@ -42,6 +42,7 @@
     </xs:simpleType>
   </xs:element>
   -->
+  <xs:element name="relatedLdtDoc" type="xs:string"></xs:element>
   <xs:element name="startLineInLDT" type="xs:integer"/>
   <xs:element name="startOffsetInLDT" type="xs:integer"/>
   <xs:element name="recordSize" type="xs:integer"/>

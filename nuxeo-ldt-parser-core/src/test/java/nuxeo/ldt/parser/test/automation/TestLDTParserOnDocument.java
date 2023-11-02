@@ -16,20 +16,18 @@
  * Contributors:
  *     Thibaud Arguillere
  */
-package nuxeo.ldt.parser.test;
+package nuxeo.ldt.parser.test.automation;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import java.io.File;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.nuxeo.common.utils.FileUtils;
 import org.nuxeo.ecm.automation.AutomationService;
 import org.nuxeo.ecm.automation.OperationContext;
 import org.nuxeo.ecm.core.api.Blob;
@@ -46,8 +44,9 @@ import org.nuxeo.runtime.test.runner.Features;
 import org.nuxeo.runtime.test.runner.FeaturesRunner;
 import org.nuxeo.runtime.test.runner.TransactionalFeature;
 
-import nuxeo.ldt.parser.automation.LDTParseAndCreateStatementsOp;
+import nuxeo.ldt.parser.automation.LDTParseAndCreateRecordsOp;
 import nuxeo.ldt.parser.service.descriptors.LDTParserDescriptor;
+import nuxeo.ldt.parser.test.TestUtils;
 import nuxeo.ldt.parser.service.LDTParser;
 import nuxeo.ldt.parser.service.LDTParserService;
 
@@ -86,8 +85,6 @@ public class TestLDTParserOnDocument {
 
         DocumentModel doc = coreSession.createDocumentModel("/", LDT_DOC_NAME,
                 nuxeo.ldt.parser.service.Constants.DOC_TYPE_LDT);
-        File testFile = FileUtils.getResourceFileFromContext("test.LDT");
-        assertNotNull(testFile);
 
         Blob blob = TestUtils.getSimpleTestFileBlob();
         doc.setPropertyValue("file:content", (Serializable) blob);
@@ -98,7 +95,7 @@ public class TestLDTParserOnDocument {
 
         OperationContext ctx = new OperationContext(coreSession);
         ctx.setInput(doc);
-        DocumentModel docResult = (DocumentModel) automationService.run(ctx, LDTParseAndCreateStatementsOp.ID);
+        DocumentModel docResult = (DocumentModel) automationService.run(ctx, LDTParseAndCreateRecordsOp.ID);
         assertNotNull(docResult);
         // We may set some listeners for LDTRecord creation in the future, let's wait.
         transactionalFeature.nextTransaction();

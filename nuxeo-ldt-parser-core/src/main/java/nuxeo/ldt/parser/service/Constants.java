@@ -40,6 +40,8 @@ public class Constants {
     
     public static final String XPATH_LDTRECORD_RECORDSIZE = "ldtrecord:recordSize";
     
+    public static final String XPATH_LDTRECORD_RELATED_LDT_DOC = "ldtrecord:relatedLdtDoc";
+    
     public static final String RECORDS_CONTAINER_TYPE = "Folder";
     
     public static final String RECORDS_CONTAINER_SUFFIX = "-Records";
