@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
+import org.nuxeo.ecm.core.api.NuxeoException;
 import org.nuxeo.runtime.model.ComponentContext;
 import org.nuxeo.runtime.model.DefaultComponent;
 import org.nuxeo.runtime.model.Extension;
@@ -80,8 +81,15 @@ public class LDTParserServiceImpl extends DefaultComponent implements LDTParserS
 
     @Override
     public LDTParser newParser(String name) {
+        if(contributions == null) {
+            throw new NuxeoException("No ldtParser contribution loaded.");
+        }
         if(StringUtils.isBlank(name)) {
             name = "default";
+        }
+        LDTParserDescriptor desc = contributions.get(name);
+        if(desc == null) {
+            return null;
         }
         return new LDTParser(contributions.get(name));
     }

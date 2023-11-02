@@ -68,7 +68,44 @@ import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 
 /**
- * TODO write the main usage class
+ * This class is in charge of parsing an LDT file and, depending on the caller's need, return a Record, a header of a
+ * record, an item of a record, etc.
+ * <br>
+ * It also can create on document/record, saving its start offset and record size for quick retrieval.
+ * The retrieval is very fats because we just get the bytes of the record inside the LDT file, even if it is stored on
+ * S3.
+ * <br>
+ * The behavior is based on the configuration. We provide a "default" configuration that must be used as an example,
+ * since it contains, by essence, each ldt files will be different for each user of the plugin.
+ * <br>
+ * The main principle is based on the usage of:
+ * - A start and end tokens to get the beginning and end of a record inside the file
+ * - Regex to parse the lines and extract headers and items.
+ * <br>
+ * The parser reads the file line by line and checks against the misc. configuration values to extract fields (a
+ * "clientId", a "mont/year", etc.) and items of each record inside the ldt.
+ * => Detail of of misc. configuration values can be found in {@link resources/OSGI-INF/ldtparser-servoce.xml}
+ * => Also see the different descriptors at @{link nuxeo.ldt.parser.service.descriptors}
+ * <br>
+ * Also, callbacks are provided for the user of the class to be handle special cases, where, typically, a Regex can't be
+ * used because the same line can contain different fields depending on custom rules.
+ * <br>
+ * The most common usage is the following:
+ * <ul>
+ * <li>Contribute an "ldtParser" extension with all the values you need</li>
+ * <li>When an LDT file is uploaded, either automatically (via listener) or "manualy", parse it and create as many
+ * LDTRecord document type that needed, also using your custom fields (like a clientId, a taxId, …)<br>
+ * This is done using {@code LDTParser#parseAndCreateStatements}, and/or the operation calling it
+ * ({@link nuxeo.ldt.parser.automation.LDTParseAndCreateStatementsOp}<br>
+ * Configuration lets you define the document type to use, the fields to map, etc., see ldtarser-service.xml
+ * </li>
+ * <li>When a record is needed, just call @{code LDTParser#getRecord}, and then @{code Record#toJson}. From this json,
+ * you can render the record as you want (for example, using Nuxeo Template Rendering)<br>
+ * The configuraiton lets you define the JSON properties you want (see recordJsonTemplate in ldtarser-service.xml)<br>
+ * The plugin has an example using a converter. The converter gets the record as json, and uses Nuxeo Template Rendering
+ * to generate a pdf. It firyts creates an HTML from the json, then uwe WebkitHtmlTopPDF to generate a pdf.
+ * </li>
+ * </ul>
  * 
  * @since 2021
  */
@@ -102,7 +139,7 @@ public class LDTParser {
 
         loadCallbacksClass();
     }
-    
+
     public String getName() {
         return name;
     }
