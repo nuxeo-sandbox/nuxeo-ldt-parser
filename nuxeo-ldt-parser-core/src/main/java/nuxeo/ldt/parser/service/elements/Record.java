@@ -84,9 +84,11 @@ public class Record {
         
         // Now the items
         JSONArray jsonItems = new JSONArray();
+        int order = 0;
         for(Item item : items) {
-            
+            order += 1;
             JSONObject oneJsonItem = new JSONObject();
+            oneJsonItem.put("order", order);
             oneJsonItem.put("type", item.getType());
             oneJsonItem.put("line", item.getLine());
             for (Map.Entry<String, String> entry : item.getFieldsAndValues().entrySet()) {

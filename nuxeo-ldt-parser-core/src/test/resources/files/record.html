@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Template</title>
+    <style>
+        body {
+            padding: 0px;
+            font-family: Helvetica, Sans-Serif;
+        }
+
+        .banner {
+            width: 100%;
+            margin-bottom: 32px;
+        }
+
+        .info {
+            width: 100%;
+            display: -webkit-box;
+            /* wkhtmltopdf uses this one */
+            display: -webkit-flex;
+            display: flex;
+
+            flex-direction: row;
+
+            -webkit-box-pack: justify;
+            webkit-justify-content: space-between;
+            justify-content: space-between;
+        }
+
+        .info .label {
+            font-size: medium;
+            font-weight: 800;
+            margin-bottom: 16px;
+        }
+
+        .operations {
+            width: 100%;
+            margin-top: 48px;
+            border: none;
+            border-spacing: 0px;
+        }
+
+        .header {
+            background-color: #f7f7f7;
+        }
+
+        .header th {
+            padding: 8px;
+            border-top-width: 2px !important;
+            border-top-color: gray !important;
+            border-top-style: solid !important;
+            border-bottom-width: 2px !important;
+            border-bottom-color: gray !important;
+            border-bottom-style: solid !important;
+        }
+
+        .header th:first-child {
+            border-left-width: 2px !important;
+            border-left-color: gray !important;
+            border-left-style: solid !important;
+        }
+
+
+        .header th:last-child {
+            border-right-width: 2px !important;
+            border-right-color: gray !important;
+            border-right-style: solid !important;
+        }
+
+        tbody tr td {
+            padding: 6px;
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: #dedddc;
+        }
+
+        .date {
+            text-align: center
+        }
+
+        th {
+            text-align: left
+        }
+
+        .negative {
+            color: red;
+        }
+
+        .nolabel {
+            display: -webkit-box;
+            /* wkhtmltopdf uses this one */
+            display: -webkit-flex;
+            display: flex;
+            flex-direction: row;
+            align-items: flex-end;
+            -webkit-align-self: flex-end;
+            align-self: flex-end;
+            -webkit-box-pack: end;
+            -webkit-box-orient: vertical;
+            /* WebKit */
+        }
+    </style>
+</head>
+
+<body>
+    <main>
+        <img src="" alt="Here the header logo" class="banner" />
+        
+        <div class="info">
+            <div>
+                <div class="label">Bank Id</div>
+                <div>003090</div>
+            </div>
+            <div>
+                <div class="label">Tax Id</div>
+                <div>12345678901567</div>
+            </div>
+            <div>
+                <div class="label">Client Id</div>
+                <div>9874567890ABC12</div>
+            </div>
+            <div>
+                <div class="label">Client Name</div>
+                <div>Ah Que Coucou</div>
+            </div>
+            <div class="nolabel">MARCH-2023</div>
+            <div class="nolabel">098765000</div>
+        </div>
+        <table class="operations">
+            <thead>
+                <tr class="header">
+                    <th class="date">Date</th>
+                    <th>Label</th>
+                    <th>Amount</th>
+                    <th>Ref</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="date">01/03</td>
+                    <td>OpeningBalance</td>
+                    <td>999.77</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td class="date">01/03</td>
+                    <td>MZ68 QN45 IS78 IS78</td>
+                    <td>-657.2</td>
+                    <td>NF99</td>
+                </tr>
+                <tr>
+                    <td class="date">01/03</td>
+                    <td>KT11 IS78 IS78</td>
+                    <td>-499.95</td>
+                    <td>MQ47</td>
+                </tr>
+                <tr>
+                    <td class="date">02/03</td>
+                    <td>RW60 EQ48</td>
+                    <td>-1084.94</td>
+                    <td>HD29</td>
+                </tr>
+                <tr>
+                    <td class="date">04/03</td>
+                    <td>BV97 ZH47</td>
+                    <td>-27.0</td>
+                    <td>HO61</td>
+                </tr>
+                <tr>
+                    <td class="date">08/03</td>
+                    <td>NK31 RH52 IS78</td>
+                    <td>658.75</td>
+                    <td>XD25</td>
+                </tr>
+                <tr>
+                    <td class="date">17/03</td>
+                    <td>MR82 GQ22</td>
+                    <td>-15.48</td>
+                    <td>BX97</td>
+                </tr>
+                <tr>
+                    <td class="date">17/03</td>
+                    <td>WD79 XJ33 IS78 IS78</td>
+                    <td>-536.0</td>
+                    <td>NF99</td>
+                </tr>
+                <tr>
+                    <td class="date">18/03</td>
+                    <td>GB27 RJ68</td>
+                    <td>-1084.17</td>
+                    <td>MQ47</td>
+                </tr>
+                <tr>
+                    <td class="date">18/03</td>
+                    <td>JD80 QB89 IS78 IS78 IS78</td>
+                    <td>77.9</td>
+                    <td>HD29</td>
+                </tr>
+                <tr>
+                    <td class="date">22/03</td>
+                    <td>NC53 SX22</td>
+                    <td>75.89</td>
+                    <td>HO61</td>
+                </tr>
+                <tr>
+                    <td class="date">23/03</td>
+                    <td>PX89 PV25 IS78</td>
+                    <td>-1002.54</td>
+                    <td>XD25</td>
+                </tr>
+                <tr>
+                    <td class="date">23/03</td>
+                    <td>WY60 VB47 IS78</td>
+                    <td>-928.07</td>
+                    <td>NF99</td>
+                </tr>
+                <tr>
+                    <td class="date">23/03</td>
+                    <td>KT22 XK12</td>
+                    <td>-692.09</td>
+                    <td>MQ47</td>
+                </tr>
+                <tr>
+                    <td class="date">23/03</td>
+                    <td>ZI72 KM41 IS78 IS78</td>
+                    <td>-628.92</td>
+                    <td>HD29</td>
+                </tr>
+                <tr>
+                    <td class="date">24/03</td>
+                    <td>DC32 HP97</td>
+                    <td>-97.31</td>
+                    <td>HO61</td>
+                </tr>
+                <tr>
+                    <td class="date">25/03</td>
+                    <td>AS23 KB27</td>
+                    <td>-297.29</td>
+                    <td>HO61</td>
+                </tr>
+                <tr>
+                    <td class="date">26/03</td>
+                    <td>PF69 DX81 IS78</td>
+                    <td>-363.84</td>
+                    <td>XD25</td>
+                </tr>
+                <tr>
+                    <td class="date">26/03</td>
+                    <td>AC72 EB81 IS78</td>
+                    <td>-1111.51</td>
+                    <td>NF99</td>
+                </tr>
+                <tr>
+                    <td class="date">26/03</td>
+                    <td>OV19 YM45 IS78 IS78 IS78</td>
+                    <td>-600.25</td>
+                    <td>MQ47</td>
+                </tr>
+                <tr>
+                    <td class="date">26/03</td>
+                    <td>UI61 IA28 IS78</td>
+                    <td>-761.3</td>
+                    <td>MQ47</td>
+                </tr>
+                <tr>
+                    <td class="date">26/03</td>
+                    <td>ClosingBalance</td>
+                    <td>-8575.55</td>
+                    <td></td>
+                </tr>
+            </tbody>
+        </table>
+
+    </main>
+</body>
+
+</html>

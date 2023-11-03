@@ -21,9 +21,11 @@ package nuxeo.ldt.parser.test.converter;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.nuxeo.common.utils.FileUtils;
 import org.nuxeo.ecm.core.api.Blob;
 import org.nuxeo.ecm.core.api.blobholder.SimpleBlobHolder;
 import org.nuxeo.ecm.core.api.impl.blob.FileBlob;
+import org.nuxeo.ecm.core.api.impl.blob.StringBlob;
 import org.nuxeo.ecm.core.convert.api.ConversionService;
 import org.nuxeo.ecm.platform.commandline.executor.api.CommandLineExecutorService;
 import org.nuxeo.ecm.platform.test.PlatformFeature;
@@ -33,6 +35,7 @@ import org.nuxeo.runtime.test.runner.FeaturesRunner;
 
 import javax.inject.Inject;
 import java.io.File;
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.HashMap;
 
@@ -59,7 +62,9 @@ public class TestHTML2PDFConverter {
 
     @Test
     public void testConvert() {
-        Blob blob = new FileBlob(new File(getClass().getResource("/files/statement.html").getPath()),"text/html");
+        
+        File f = FileUtils.getResourceFileFromContext("files/record.html");
+        Blob blob = new FileBlob(f,"text/html");
         HashMap<String, Serializable> params = new HashMap<>();
         Blob pdf = conversionService.convert("html2pdf",new SimpleBlobHolder(blob),params).getBlob();
         Assert.assertNotNull("PDF is null",pdf);

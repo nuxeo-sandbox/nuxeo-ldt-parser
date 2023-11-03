@@ -79,6 +79,7 @@ public class TestLDTGetRecordJsonOp {
     @Inject
     protected LDTParserService ldtParserService;
     
+    // Shared by misc tests.
     protected void checkReturnedJson(String jsonStr) {
         
         JSONObject json = new JSONObject(jsonStr);
@@ -130,7 +131,7 @@ public class TestLDTGetRecordJsonOp {
         // ==============================
         OperationContext ctx = new OperationContext(coreSession);
         ctx.setInput(docs.get(0));
-        // No parameter, we use "default" parser and the signatire with an input document
+        // No parameter, we use "default" parser and the signature with an input document
         Blob jsonBlob = (JSONBlob) automationService.run(ctx, LDTGetRecordJsonOp.ID);
         assertNotNull(jsonBlob);
         checkReturnedJson(jsonBlob.getString());

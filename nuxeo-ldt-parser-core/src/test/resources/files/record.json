@@ -1,0 +1,231 @@
+{
+  "record": {
+    "bankId": "003090",
+    "clientType": "F",
+    "clientId": "9874567890ABC12",
+    "month": "MARCH",
+    "clientName": "Ah Que Coucou",
+    "year": "2023",
+    "bankType": "BANK0003",
+    "taxId": "12345678901567",
+    "customRef": "098765000",
+    "items": [
+      {
+        "lineCode": "2",
+        "date": "01/03",
+        "amount": "999.77",
+        "line": "2   01/03    OPENING BALANCE                                                    999.77",
+        "type": "OpeningBalance",
+        "order": 1
+      },
+      {
+        "lineCode": "2",
+        "date": "01/03",
+        "amount": "657.20-",
+        "ref": "NF99",
+        "line": "2   01/03     MZ68 QN45 IS78 IS78           657.20-          NF99",
+        "label": "MZ68 QN45 IS78 IS78",
+        "type": "ItemLine",
+        "order": 2
+      },
+      {
+        "lineCode": "2",
+        "date": "01/03",
+        "amount": "499.95-",
+        "ref": "MQ47",
+        "line": "2   01/03     KT11 IS78 IS78                499.95-          MQ47",
+        "label": "KT11 IS78 IS78",
+        "type": "ItemLine",
+        "order": 3
+      },
+      {
+        "lineCode": "2",
+        "date": "02/03",
+        "amount": "1084.94-",
+        "ref": "HD29",
+        "line": "2   02/03     RW60 EQ48                    1084.94-          HD29",
+        "label": "RW60 EQ48",
+        "type": "ItemLine",
+        "order": 4
+      },
+      {
+        "lineCode": "2",
+        "date": "04/03",
+        "amount": "27.00-",
+        "ref": "HO61",
+        "line": "2   04/03     BV97 ZH47                      27.00-          HO61",
+        "label": "BV97 ZH47",
+        "type": "ItemLine",
+        "order": 5
+      },
+      {
+        "lineCode": "2",
+        "date": "08/03",
+        "amount": "658.75",
+        "ref": "XD25",
+        "line": "2   08/03     NK31 RH52 IS78                658.75           XD25",
+        "label": "NK31 RH52 IS78",
+        "type": "ItemLine",
+        "order": 6
+      },
+      {
+        "lineCode": "2",
+        "date": "17/03",
+        "amount": "15.48-",
+        "ref": "BX97",
+        "line": "2   17/03     MR82 GQ22                      15.48-          BX97",
+        "label": "MR82 GQ22",
+        "type": "ItemLine",
+        "order": 7
+      },
+      {
+        "lineCode": "2",
+        "date": "17/03",
+        "amount": "536.00-",
+        "ref": "NF99",
+        "line": "2   17/03     WD79 XJ33 IS78 IS78           536.00-          NF99",
+        "label": "WD79 XJ33 IS78 IS78",
+        "type": "ItemLine",
+        "order": 8
+      },
+      {
+        "lineCode": "2",
+        "date": "18/03",
+        "amount": "1084.17-",
+        "ref": "MQ47",
+        "line": "2   18/03     GB27 RJ68                    1084.17-          MQ47",
+        "label": "GB27 RJ68",
+        "type": "ItemLine",
+        "order": 9
+      },
+      {
+        "lineCode": "2",
+        "date": "18/03",
+        "amount": "77.90",
+        "ref": "HD29",
+        "line": "2   18/03     JD80 QB89 IS78 IS78 IS78       77.90           HD29",
+        "label": "JD80 QB89 IS78 IS78 IS78",
+        "type": "ItemLine",
+        "order": 10
+      },
+      {
+        "lineCode": "2",
+        "date": "22/03",
+        "amount": "75.89",
+        "ref": "HO61",
+        "line": "2   22/03     NC53 SX22                      75.89           HO61",
+        "label": "NC53 SX22",
+        "type": "ItemLine",
+        "order": 11
+      },
+      {
+        "lineCode": "2",
+        "date": "23/03",
+        "amount": "1002.54-",
+        "ref": "XD25",
+        "line": "2   23/03     PX89 PV25 IS78               1002.54-          XD25",
+        "label": "PX89 PV25 IS78",
+        "type": "ItemLine",
+        "order": 12
+      },
+      {
+        "lineCode": "2",
+        "date": "23/03",
+        "amount": "928.07-",
+        "ref": "NF99",
+        "line": "2   23/03     WY60 VB47 IS78                928.07-          NF99",
+        "label": "WY60 VB47 IS78",
+        "type": "ItemLine",
+        "order": 13
+      },
+      {
+        "lineCode": "2",
+        "date": "23/03",
+        "amount": "692.09-",
+        "ref": "MQ47",
+        "line": "2   23/03     KT22 XK12                     692.09-          MQ47",
+        "label": "KT22 XK12",
+        "type": "ItemLine",
+        "order": 14
+      },
+      {
+        "lineCode": "2",
+        "date": "23/03",
+        "amount": "628.92-",
+        "ref": "HD29",
+        "line": "2   23/03     ZI72 KM41 IS78 IS78           628.92-          HD29",
+        "label": "ZI72 KM41 IS78 IS78",
+        "type": "ItemLine",
+        "order": 15
+      },
+      {
+        "lineCode": "2",
+        "date": "24/03",
+        "amount": "97.31-",
+        "ref": "HO61",
+        "line": "2   24/03     DC32 HP97                      97.31-          HO61",
+        "label": "DC32 HP97",
+        "type": "ItemLine",
+        "order": 16
+      },
+      {
+        "lineCode": "2",
+        "date": "25/03",
+        "amount": "297.29-",
+        "ref": "HO61",
+        "line": "2   25/03     AS23 KB27                     297.29-          HO61",
+        "label": "AS23 KB27",
+        "type": "ItemLine",
+        "order": 17
+      },
+      {
+        "lineCode": "2",
+        "date": "26/03",
+        "amount": "363.84-",
+        "ref": "XD25",
+        "line": "2   26/03     PF69 DX81 IS78                363.84-          XD25",
+        "label": "PF69 DX81 IS78",
+        "type": "ItemLine",
+        "order": 18
+      },
+      {
+        "lineCode": "2",
+        "date": "26/03",
+        "amount": "1111.51-",
+        "ref": "NF99",
+        "line": "2   26/03     AC72 EB81 IS78               1111.51-          NF99",
+        "label": "AC72 EB81 IS78",
+        "type": "ItemLine",
+        "order": 19
+      },
+      {
+        "lineCode": "2",
+        "date": "26/03",
+        "amount": "600.25-",
+        "ref": "MQ47",
+        "line": "2   26/03     OV19 YM45 IS78 IS78 IS78      600.25-          MQ47",
+        "label": "OV19 YM45 IS78 IS78 IS78",
+        "type": "ItemLine",
+        "order": 20
+      },
+      {
+        "lineCode": "2",
+        "date": "26/03",
+        "amount": "761.30-",
+        "ref": "MQ47",
+        "line": "2   26/03     UI61 IA28 IS78                761.30-          MQ47",
+        "label": "UI61 IA28 IS78",
+        "type": "ItemLine",
+        "order": 21
+      },
+      {
+        "lineCode": "2",
+        "date": "26/03",
+        "amount": "8575.55-",
+        "line": "2 26/03    CLOSING BALANCE                                                   8575.55-",
+        "type": "ClosingBalance",
+        "order": 22
+      }
+    ]
+  }
+}

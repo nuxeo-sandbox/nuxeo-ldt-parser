@@ -11,19 +11,48 @@
             <script><![CDATA[function run(input, params) {
 
                   var json = JSON.parse(input.getString());
+                  
+                  // Make sure items are ordered
+                  json.record.items.sort(function(a, b) {
+                    return a.order - b.order;
+                  });
+                  
+                  // We also add missing fields, set them to "" and convert the negative string to number
+                  // This happens when different types of items are used
+                  json.record.items.forEach(function(item) {
+                    if(!item.label) {
+                      item.label = "";
+                    }
+                    if(!item.ref) {
+                      item.ref = "";
+                    }
+                    if(item.amount.endsWith("-")) {
+                      item.amount = item.amount.replace("-", "");
+                      item.amount = +item.amount;
+                      item.amount *= -1;
+                    } else {
+                      item.amount = +item.amount;
+                    }
+                  });
 
-                  ctx.statement = json.statement;
+                  ctx.record = json.record;
+                  // Because we have a JSON array of objects, used in freemarker,
+                  // it is better ti have a Java object.
+                  ctx.items = Java.to(json.record.items);
 
                   var dummyDoc = Session.createDocumentModel("/","File","File");
 
                   var html = Render.Document(dummyDoc,{
                     template: "template:StatementTemplate",
-                    filename: "statement.html",
+                    filename: "record.html",
                     mimetype: "text/html",
                     type: "ftl"
                   });
-
+Console.log("================================================");
                   //Console.log(html.getString());
+                  Console.log(html.getFilename());
+                  Console.log(html.getMimeType());
+Console.log("================================================");
 
                   return Blob.RunConverter(html, {
                     'converter': 'html2pdf'

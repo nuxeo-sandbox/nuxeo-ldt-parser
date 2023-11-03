@@ -20,16 +20,13 @@
 
 package nuxeo.ldt.parser.converter;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.JacksonException;
 
 import nuxeo.ldt.parser.service.LDTParser;
 import nuxeo.ldt.parser.service.LDTParserService;
 import nuxeo.ldt.parser.service.elements.Record;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.nuxeo.ecm.core.api.Blob;
 import org.nuxeo.ecm.core.api.blobholder.BlobHolder;
 import org.nuxeo.ecm.core.api.blobholder.SimpleBlobHolder;
@@ -43,8 +40,6 @@ import java.io.Serializable;
 import java.util.Map;
 
 public class LDT2JSONConverter implements Converter {
-
-    private static final Logger log = LogManager.getLogger(LDT2JSONConverter.class);
 
     @Override
     public void init(ConverterDescriptor converterDescriptor) {
@@ -70,9 +65,7 @@ public class LDT2JSONConverter implements Converter {
         Record record = parser.getRecord(blobHolder.getBlob(), startOffset, recordSize);
 
         try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            //objectMapper.configure(SerializationFeature.WRAP_ROOT_VALUE, true);
-            String json = objectMapper.writeValueAsString(record);
+            String json = record.toJson();
             Blob jsonBlob = new JSONBlob(json);
             if (StringUtils.isBlank(targetfilename)) {
                 targetfilename = "output.json";
@@ -80,11 +73,13 @@ public class LDT2JSONConverter implements Converter {
             if(!targetfilename.endsWith(".json")) {
                 targetfilename += ".json";
             }
-
+            jsonBlob.setFilename(targetfilename);
+    
             return new SimpleBlobHolder(jsonBlob);
             
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new ConversionException(e);
         }
+        
     }
 }

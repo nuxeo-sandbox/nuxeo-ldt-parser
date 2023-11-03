@@ -107,63 +107,69 @@
     </style>
   </head>
   <body>
+  <!-- The JSON comes from Record#toJson, and the fields from the configuration
+       in the unit test, an automation chain sets the Context.record entry to the JSON -->
     <main>
-        <#if Context.statement.TipoForm == "BANK000L">
-            <img src="TODO"
-        <#elseif Context.statement.TipoForm == "BANK000G">
-            <img src="TODO"
+        <!-- WARNING: wkhtmltopdf awlays fails when URLs cannot be resolved -->
+        <#if Context.record.bankType == "BANK0003">
+            <img alt="Header and logo for BANK0003"
+                 src="data:image/png;base64,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">
+        <#elseif Context.record.bankType == "BANK0004">
+            <img src="" alt="Header and logo for BANK0004">
         </#if>
 
         <div class="info">
             <div>
                 <div class="label">
-                    Agência:
+                    Bank Id:
                 </div>
                 <div>
-                    ${Context.statement.Agencia}
+                    ${Context.record.bankId}
                 </div>
             </div>
             <div>
                 <div class="label">
-                    Conta:
+                    Tax Id:
                 </div>
                 <div>
-                    ${Context.statement.NConta}
+                    ${Context.record.taxId}
                 </div>
             </div>
             <div>
                 <div class="label">
-                    Nome:
+                    Client name (Id):
                 </div>
                 <div>
-                    ${Context.statement.Nome}
+                    ${Context.record.clientName} (${Context.record.clientId})
                 </div>
             </div>
             <div class="nolabel">
-                ${Context.statement.MesAno}
+                ${Context.record.month}/${Context.record.year}
             </div>
             <div class="nolabel">
-                000000002
+                ${Context.record.customRef}
             </div>
         </div>
         <table class="operations">
             <thead>
                 <tr class="header">
-                    <th class="date" style="width: 10%;">Data</th>
-                    <th style="width: 50%;">Histórico de Lançamentos</th>
-                    <th style="width: 10%;">Orig</th>
-                    <th style="width: 10%;">Valor (R$)</th>
-                    <th style="width: 20%;">Saldo (R$)</th>
+                    <th class="date" style="width: 10%;">Date</th>
+                    <th style="width: 50%;">Label</th>
+                    <th style="width: 10%;">Amount</th>
+                    <th style="width: 10%;">Ref.</th>
                 </tr>
             </thead>
             <tbody>
-                <#list Context.statement.Movimentacao as key, value>
+                <#list Context.items as item>
                     <tr>
-                        <td class="date">${value.Data}</td>
-                        <td>${value.Lancamento}</td>
-                        <td></td>
-                        <td class="amout ${value.Valor?ends_with("-")?then("negative", "" )}">${value.Valor}</td>
-                        <td class="amount ${value.Saldo?ends_with("-")?then("negative", "" )}">${value.Saldo}</td>
+                        <td class="date">${item.date}</td>
+                        <td>${item.label}</td>
+                        <#if item.amount < 0>
+                          <td class="amount negative">${item.amount}</td>
+                        <#else>
+                          <td class="amount">${item.amount}</td>
+                        </#if>
+                        <td>${item.ref}</td>
                     </tr>
                 </#list>
             </tbody>

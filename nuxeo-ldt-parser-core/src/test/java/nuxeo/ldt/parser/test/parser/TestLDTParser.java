@@ -30,6 +30,7 @@ import nuxeo.ldt.parser.service.elements.HeaderLine;
 import nuxeo.ldt.parser.service.elements.Record;
 import nuxeo.ldt.parser.test.TestUtils;
 
+import org.apache.commons.lang3.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.Assert;
@@ -44,6 +45,7 @@ import org.nuxeo.runtime.test.runner.FeaturesRunner;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.List;
 
@@ -294,27 +296,8 @@ public class TestLDTParser {
         assertNotNull(record);
         String jsonStr = record.toJson();
         assertNotNull(jsonStr);
-        // System.out.println(jsonStr);
-
-        JSONObject mainJson = new JSONObject(jsonStr);
-        assertNotNull(mainJson);
-        JSONObject rootElement = mainJson.getJSONObject("record");
-        assertNotNull(rootElement);
-
-        // System.out.println(rootElement.get("clientId"));
-
-        assertEquals(TestUtils.SIMPLELDT_RECORD2_VALUES_MAP.get("clientId"), rootElement.get("clientId"));
-        assertEquals(TestUtils.SIMPLELDT_RECORD2_VALUES_MAP.get("taxId"), rootElement.get("taxId"));
-
-        JSONArray items = rootElement.getJSONArray("items");
-        // assertEquals(TestUtils.SIMPLELDT_RECORD2_ITEMS_COUNT, items.length());
-        JSONObject item = (JSONObject) items.get(0);
-        assertEquals("OpeningBalance", (String) item.get("type"));
-        assertEquals("999.77", (String) item.get("amount"));
-
-        item = (JSONObject) items.get(items.length() - 1);
-        assertEquals("ClosingBalance", (String) item.get("type"));
-        assertEquals("8575.55-", (String) item.get("amount"));
+        //System.out.println(jsonStr);
+        TestUtils.checkSimpleTestFileRecord2Values(jsonStr);
 
     }
 
@@ -325,32 +308,15 @@ public class TestLDTParser {
         LDTParser parser = ldtParserService.newParser(null);
         Record record = parser.getRecord(blob, TestUtils.SIMPLELDT_RECORD2_STARTOFFSET,
                 TestUtils.SIMPLELDT_RECORD2_RECORDSIZE);
-
         assertNotNull(record);
 
         LDTParserDescriptor parserDesc = parser.getDescriptor();
         parserDesc.getRecordJsonTemplate().setRootName(null);
         String jsonStr = record.toJson();
+        parserDesc.getRecordJsonTemplate().setRootName("record");
         assertNotNull(jsonStr);
-        // System.out.println(jsonStr);
-
-        JSONObject mainJson = new JSONObject(jsonStr);
-        assertNotNull(mainJson);
-
-        // System.out.println(mainJson.get("clientId"));
-
-        assertEquals(TestUtils.SIMPLELDT_RECORD2_VALUES_MAP.get("clientId"), mainJson.get("clientId"));
-        assertEquals(TestUtils.SIMPLELDT_RECORD2_VALUES_MAP.get("taxId"), mainJson.get("taxId"));
-
-        JSONArray items = mainJson.getJSONArray("items");
-        assertEquals(TestUtils.SIMPLELDT_RECORD2_ITEMS_COUNT, items.length());
-        JSONObject item = (JSONObject) items.get(0);
-        assertEquals("OpeningBalance", (String) item.get("type"));
-        assertEquals("999.77", (String) item.get("amount"));
-
-        item = (JSONObject) items.get(items.length() - 1);
-        assertEquals("ClosingBalance", (String) item.get("type"));
-        assertEquals("8575.55-", (String) item.get("amount"));
+        
+        TestUtils.checkSimpleTestFileRecord2Values(jsonStr, false);
 
     }
 
