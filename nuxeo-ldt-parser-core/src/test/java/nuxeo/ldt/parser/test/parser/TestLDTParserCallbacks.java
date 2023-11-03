@@ -20,22 +20,15 @@
 
 package nuxeo.ldt.parser.test.parser;
 
-import com.fasterxml.jackson.core.JacksonException;
 
-import nuxeo.ldt.parser.service.descriptors.LDTParserDescriptor;
 import nuxeo.ldt.parser.service.LDTParser;
 import nuxeo.ldt.parser.service.LDTParserService;
 import nuxeo.ldt.parser.service.elements.Item;
 import nuxeo.ldt.parser.service.elements.HeaderLine;
 import nuxeo.ldt.parser.service.elements.Record;
-import nuxeo.ldt.parser.test.TestUtils;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.nuxeo.ecm.core.api.Blob;
 import org.nuxeo.ecm.platform.test.PlatformFeature;
 import org.nuxeo.runtime.test.runner.Deploy;
 import org.nuxeo.runtime.test.runner.Features;
@@ -43,7 +36,6 @@ import org.nuxeo.runtime.test.runner.FeaturesRunner;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 
 import java.util.Arrays;
 import java.util.List;

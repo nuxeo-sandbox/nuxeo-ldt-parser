@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<component name="nuxeo.bi.mimetypes">
+<component name="nuxeo.ldt.parser.mimetypes">
 
     <extension point="mimetype" target="org.nuxeo.ecm.platform.mimetype.service.MimetypeRegistryService">
         <mimetype binary="false" iconPath="text.png" normalized="application/ldt">

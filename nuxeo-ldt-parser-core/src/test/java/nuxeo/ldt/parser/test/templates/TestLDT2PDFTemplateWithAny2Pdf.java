@@ -25,7 +25,6 @@ import org.junit.runner.RunWith;
 import org.nuxeo.common.utils.FileUtils;
 import org.nuxeo.ecm.automation.AutomationService;
 import org.nuxeo.ecm.automation.OperationContext;
-import org.nuxeo.ecm.automation.OperationException;
 import org.nuxeo.ecm.automation.test.AutomationFeature;
 import org.nuxeo.ecm.core.api.Blob;
 import org.nuxeo.ecm.core.api.CoreSession;
@@ -36,17 +35,19 @@ import org.nuxeo.runtime.test.runner.FeaturesRunner;
 
 import javax.inject.Inject;
 import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
 
 @RunWith(FeaturesRunner.class)
 @Features({AutomationFeature.class})
 @Deploy({
         "org.nuxeo.ecm.platform.convert",
         "nuxeo.ldt.parser.nuxeo-ldt-parser-core",
-        "nuxeo.ldt.parser.nuxeo-ldt-parser-core:test-automation-render-pdf-contrib.xml"
+        // Deploy the template,
+        "nuxeo.ldt.parser.nuxeo-ldt-parser-core:render-pdf-with-template/template-contrib.xml",
+        // The automation chain,
+        "nuxeo.ldt.parser.nuxeo-ldt-parser-core:render-pdf-with-template/with-any2pdf/automation-render-pdf-with-any2pdf.xml"
 })
-public class TestLDT2PDFTemplate {
+//any2pdf is a a converter provided by the platform out of the box
+public class TestLDT2PDFTemplateWithAny2Pdf {
 
     @Inject
     protected AutomationService automationService;
@@ -61,13 +62,12 @@ public class TestLDT2PDFTemplate {
         Blob blob = new FileBlob(f,"application/json");
         
         OperationContext ctx = new OperationContext(session);
-        Map<String, Object> params = new HashMap<>();
         ctx.setInput(blob);
-        Blob pdf = (Blob) automationService.run(ctx, "javascript.test_render_pdf", params);
+        Blob pdf = (Blob) automationService.run(ctx, "javascript.test_render_pdf_with_any2pdf");
         Assert.assertNotNull(pdf);
         
-        f = new File("/Users/thibaud/Downloads/blah.pdf");
-        pdf.transferTo(f);
+        //f = new File("HERE YOUR PATH");
+        //pdf.transferTo(f);
     }
 
 }

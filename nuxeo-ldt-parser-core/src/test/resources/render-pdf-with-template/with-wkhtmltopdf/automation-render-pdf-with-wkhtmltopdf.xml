@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
-<component name="nuxeo.ldt.parser.automationjs.test">
+<component name="nuxeo.ldt.parser.test.automationjs.wkhtml2pdf">
 
     <extension target="org.nuxeo.automation.scripting.internals.AutomationScriptingComponent" point="operation">
 
-        <scriptedOperation id="javascript.test_render_pdf">
+        <scriptedOperation id="javascript.test_render_pdf_with_wkhtmltopdf">
             <inputType>blob</inputType>
             <outputType>blob</outputType>
             <category>javascript</category>
@@ -43,19 +43,17 @@
                   var dummyDoc = Session.createDocumentModel("/","File","File");
 
                   var html = Render.Document(dummyDoc,{
-                    template: "template:StatementTemplate",
+                    template: "template:BankStatementTemplate",
                     filename: "record.html",
                     mimetype: "text/html",
                     type: "ftl"
                   });
-Console.log("================================================");
+//Console.log("================================================");
                   //Console.log(html.getString());
-                  Console.log(html.getFilename());
-                  Console.log(html.getMimeType());
-Console.log("================================================");
+//Console.log("================================================");
 
                   return Blob.RunConverter(html, {
-                    'converter': 'html2pdf'
+                    'converter': 'html2pdfWithWKHtmlToPdf'
                   });
              }]]>
             </script>

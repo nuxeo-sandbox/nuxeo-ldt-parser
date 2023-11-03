@@ -44,7 +44,6 @@ public class CallbacksExample implements Callbacks {
         List<HeaderLine> headers = new ArrayList<HeaderLine>();
         List<String> fieldList = null;
         Map<String, String> fieldsAndValues = null;
-        String name;
         List<Item> items = new ArrayList<Item>();
         long lineNumber = 0;
         for(String line : lines) {
@@ -55,16 +54,16 @@ public class CallbacksExample implements Callbacks {
                 // Here, we hard code the values (with no relation to line)
                 fieldList = Arrays.asList("ClientId", "TaxId");
                 fieldsAndValues = Map.of("ClientId", "12345", "TaxId", "67890");
-                headers.add(new HeaderLine(fieldList, fieldsAndValues, lineNumber));
-            } else if (line.indexOf("Some Token") > -1) {
+                headers.add(new HeaderLine(fieldList, fieldsAndValues, lineNumber, "FIRST_LINE_HEADER"));
+            } else if (line.indexOf("Some Token for second line") > -1) {
                 fieldList = Arrays.asList("header2_field1", "header2_field2");
                 fieldsAndValues = Map.of("header2_field1", "ABCDEF", "header2_field2", "GHIJKL");
-                headers.add(new HeaderLine(fieldList, fieldsAndValues, lineNumber));
+                headers.add(new HeaderLine(fieldList, fieldsAndValues, lineNumber, "SECOND_LINE_HEADER"));
             } else {
                 // Not a header
                 // Still, check we do have at least one
                 if(headers.size() == 0) {
-                    throw new NuxeoException("SHould have at list one header");
+                    throw new NuxeoException("Should have at list one header");
                 }
                 // Now, parsing items. We may have some kind of "opening" line, "closing" line,
                 // 'detail" line, etc.:
@@ -112,7 +111,7 @@ public class CallbacksExample implements Callbacks {
             return null;
         } */
         
-        return new HeaderLine(fieldList, fieldsAndValues, lineNumber);
+        return new HeaderLine(fieldList, fieldsAndValues, lineNumber, name);
     }
 
     @Override

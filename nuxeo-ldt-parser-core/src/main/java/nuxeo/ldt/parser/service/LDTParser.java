@@ -194,7 +194,7 @@ public class LDTParser {
         for (LDTHeaderDescriptor header : config.getHeaders()) {
             Matcher m = header.getCompiledPattern().matcher(line);
             if (m.matches()) {
-                return new HeaderLine(m, header.getFields(), lineNumber);
+                return new HeaderLine(m, header.getFields(), lineNumber, header.getName());
             }
         }
 

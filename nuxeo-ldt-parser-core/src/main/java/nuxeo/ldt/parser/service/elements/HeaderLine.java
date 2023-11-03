@@ -31,33 +31,36 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 /**
  * A MainLine is a line that is, basically, the header(s) of the record.
  * Below a MainLine come n Item.
- * 
  * lineNumber is the indice in the records, not in the whole LDT file, and it starts at 1
  * 
  * @since 2021
  */
 public class HeaderLine {
 
+    protected String name;
+
     protected List<String> fieldList;
 
     protected Map<String, String> fieldsAndValues;
-    
+
     protected long lineNumber;
-    
-    public HeaderLine(List<String> fieldList, Map<String, String> fieldsAndValues, long lineNumber) {
+
+    public HeaderLine(List<String> fieldList, Map<String, String> fieldsAndValues, long lineNumber, String name) {
         this.fieldList = fieldList;
         this.fieldsAndValues = fieldsAndValues;
         this.lineNumber = lineNumber;
+        this.name = name;
     }
 
-    public HeaderLine(Matcher m, List<String> fieldList, long lineNumber) {
+    public HeaderLine(Matcher m, List<String> fieldList, long lineNumber, String name) {
 
         if (m.groupCount() != fieldList.size()) {
             throw new NuxeoException(String.format(
                     "Count of captured groups (%d) should be equal to the number of fields set in the configuration (%d)",
                     m.groupCount(), fieldList.size()));
         }
-        
+
+        this.name = name;
         this.lineNumber = lineNumber;
 
         this.fieldList = fieldList;
@@ -71,7 +74,7 @@ public class HeaderLine {
 
         return fieldsAndValues.get(fieldName);
     }
-    
+
     public long getLineNumber() {
         return lineNumber;
     }
@@ -81,7 +84,7 @@ public class HeaderLine {
         String jsonString;
         try {
             jsonString = objectMapper.writeValueAsString(fieldsAndValues);
-            jsonString = "{\"lineNumber\": " + lineNumber + ", \"fieldsAndValues\": " + jsonString +"}";
+            jsonString = "{\"lineNumber\": " + lineNumber + ", \"fieldsAndValues\": " + jsonString + "}";
         } catch (JsonProcessingException e) {
             jsonString = "Error processing the fields to JSON";
         }

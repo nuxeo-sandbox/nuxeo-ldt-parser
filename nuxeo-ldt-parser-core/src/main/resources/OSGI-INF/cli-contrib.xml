@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<component name="nuxeo.bi.cli">
+<component name="nuxeo.ldt.parser.cli">
 
     <require>org.nuxeo.ecm.platform.commandline.executor.service.defaultContrib</require>
 

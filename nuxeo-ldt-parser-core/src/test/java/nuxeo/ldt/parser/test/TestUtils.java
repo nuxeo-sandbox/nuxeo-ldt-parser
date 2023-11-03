@@ -33,8 +33,6 @@ import org.nuxeo.ecm.core.api.impl.blob.FileBlob;
 import org.nuxeo.ecm.core.api.impl.blob.StringBlob;
 import org.nuxeo.runtime.api.Framework;
 
-import com.fasterxml.jackson.core.JacksonException;
-
 import nuxeo.ldt.parser.service.LDTParser;
 import nuxeo.ldt.parser.service.LDTParserService;
 import nuxeo.ldt.parser.service.elements.Record;

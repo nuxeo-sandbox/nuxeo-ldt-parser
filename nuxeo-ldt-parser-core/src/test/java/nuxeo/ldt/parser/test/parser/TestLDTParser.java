@@ -30,9 +30,6 @@ import nuxeo.ldt.parser.service.elements.HeaderLine;
 import nuxeo.ldt.parser.service.elements.Record;
 import nuxeo.ldt.parser.test.TestUtils;
 
-import org.apache.commons.lang3.StringUtils;
-import org.json.JSONArray;
-import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -45,7 +42,6 @@ import org.nuxeo.runtime.test.runner.FeaturesRunner;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 
 import java.util.List;
 

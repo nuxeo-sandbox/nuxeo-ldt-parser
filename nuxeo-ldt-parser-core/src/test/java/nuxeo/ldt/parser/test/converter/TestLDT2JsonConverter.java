@@ -56,12 +56,7 @@ public class TestLDT2JsonConverter {
     }
 
     @Test
-    public void testConversionSuccess() throws Exception {
-        
-        TestUtils.record2Html();
-        if(conversionService != null) {
-            return;
-        }
+    public void testConversionSuccess() throws IOException {
 
         Blob blob = TestUtils.getSimpleTestFileBlob();
         HashMap<String, Serializable> params = new HashMap<>();

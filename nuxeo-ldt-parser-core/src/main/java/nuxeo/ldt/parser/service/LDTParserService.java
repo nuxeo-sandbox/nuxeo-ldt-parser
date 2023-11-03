@@ -1,7 +1,5 @@
 package nuxeo.ldt.parser.service;
 
-import org.nuxeo.ecm.core.api.Blob;
-
 /**
  * Implementors have to provide an {@Code LDTParser}. See the documentation of LDTParser for more details.
  * 
