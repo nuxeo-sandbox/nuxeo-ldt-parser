@@ -1,49 +1,66 @@
 # nuxeo-ldt-parser
 
 nuxeo-ldt-parser provides a **configurable service for parsing LDT files**.
+
+LDT files usually contain a lot of data, several thousands, sometimes hundreds of thousands, and this makes billions after a while (example: LDT file holding bank statements for all the customers).
+
+The parser aims to store only retrieval information and optional custom fields:
+
+* Retrieval information: See below, it is about quickly getting all the info inside the LDT file without re-parsing it
+* Custom fields: Only the fields needed for the business, typically for search (like a clientID for example)
+
+So, still with the bank statement example, we would store only some bytes for retrieval and a couple fields for searching, but not the dozens of lines of transactions, these will be retrieved only when it is time to download a rendition of the statement, with all its lines of transaction.
+
  
 ## Description
 
-<div style="margin-left:50px">
-ℹ️ For the rest of this documentation, we name "Record" the set of information saved in the LDT file. Such file holds _n_ lines defining _m_ records. A record typically has one or more headers and then several items.
-</div>
+> [!NOTE]
+> For the rest of this documentation, we name "Record" the set of information saved in the LDT file. Such file holds _n_ lines defining _m_ records. A record typically has one or more headers and then several items.
 
-The plugin parses an LDT file and extracts _records_ based on configuration. _Records_ can be saved as Nuxeo `Documents`, with fields required for a fast retrieval plus any custom field you need, mapped to XPaths.
+### Parse the File, extract _Records_, with _header(s)_ and _items_
 
-To render a record, you will get its JSON and render it (for example, using an HTML template and freemarker).
+The plugin parses an LDT file and extracts _records_ based on configuration. _Records_ can be saved as Nuxeo `Documents`, with utility fields required for a fast retrieval (see below) plus any custom field you need (if the ldt holds bank statements, you would store client name, amounts, dates, …).
 
-Each _Record_ stores:
+The plugin parses the file line by line and expects 2 kinds of lines: A line is either a _header_ or an _item_:
+
+* A _header_ usually defines fields/values shared by the _record_. In a bank statement example, it will be the date of the statement, the client Id, the bank account, etc.
+
+> [!IMPORTANT]
+> The plugin expects that every _record_ has at least one header and this header starts with the `startRecordToken` defined in the contribution.
+
+* After the header(s), come the _items_. In the bank statement example, it will be several lines with the date, the reason, the amount, etc.
+
+
+### Rendering a _Record_
+To render a record, you will first get its JSON and then render it as you need. In the unit tests, we provide rendering examples: render to html (using freemarker for templating), render to pdf (which actually is a rendering to html then a conversion to pdf)
+
+
+### Retrieving a _Record_ inside the LDT File
+The plugin provides the `LDTRecord` facet that comes with the `ldtrecord` schema, and a `LDTRecord` document type that has this facet (the configuration allows for using another document type, as long as you give it the `LDTRecord` facet.)
+
+The `ldtrecord` schema stores:
 
 * The ID of the related Nuxeo document storing the LDT file
-* The start offset and record size (bytes) inside the ldt file.
+* The start offset and record size (in bytes) of the _record_ inside the ldt file.
 
-So, when a record needs to be fetched, we just get the required bytes, no need to re-parse the whole file to find a record.
+So, when a _record_ needs to be fetched from the document, we just get the required bytes in the original ldt file, no need to re-parse the whole file to find a record. Notice this also works if you store your binaries in S3 using nuxeo-s3-binary-storage (see below, "S3 BlobProvider Configuration").
 
+
+### Configuration
 Typically, you contribute the LDTParserService, "ldtParser" extension point to define :
 
 - The Start and End of _record_ tokens
-- As many Regex as needed to parse the header(s) and the items of the record, with field mapping to your Nuxeo document
-- The JSON template to use when reading a record inside the LDT
-- Document type(s) to create (they must be declared with the "LDTRecord" facet)
-- Callbacks (java) for fine tuning when needed (mainly, when a Regex can't resolve a line)
+- As many Regex as needed to parse the _header(s)_ and the _items_ of the _record_, with field mapping to your Nuxeo document (so you map the "clientId" header to the `statement:clientId` field of your document)
 
-**See `ldtparser-service.xml` for a full example and all the configuration properties**
+  > [!IMPORTANT]
+  > The plugin uses `java.util.regex.Pattern` for handling Regex. Make sure your expressions are compatible with this usage.
+ 
+* The JSON template to use when reading a record inside the LDT
+* Document type(s) to create (they must be declared with the "LDTRecord" facet)
+* Callbacks (java) for fine tuning when needed (mainly, when a Regex can't resolve a line)
 
-## Retrieval is Super Fast when Using S3
-
-The plugin, when parsing an ldt file, creates documents (see below) that store retrieval information. This way, when a single record is requested, the plugin just gets the bytes from a stream in S3 => no need to first download the file from S3 to local storage (typically an EBS column). This is extremely performant, because it makes no sense to download a 600MB file just to get 2KB from it. It would not scale : Imagine, 50 concurrent users asking their statement from 50. different big LDT files.
-
-This works when binaries are stored by Nuxeo in the S3 Binary Manager of course, it is transparent. The only thing to do is add the `allowByteRange` property to the configuration. The contribution to add is :
-
-```
-<require>s3</require>
-<extension target="org.nuxeo.ecm.core.blob.BlobManager" point="configuration">
-  <blobprovider name="default">
-    <property name="allowByteRange">true</property>
-  </blobprovider>
-</extension>
-```
-
+ > [!NOTE]
+> See `ldtparser-service.xml` for a full example and all the configuration properties
 
 
 ## Simple example with 2 records
@@ -66,32 +83,32 @@ $12345ABCD$    TYPE=BANK0003  CLIENT TYPE: B     TAX ID: 12345678901567    CLIEN
 #### In this file, each _Record_:
 
 * Starts with exactly `$12345ABCD$`
-* Has 2 lines of headers with fields like bank type, client id, client name, etc. Then has n lines of items.
-* Items start with an `OPENING BALANCE` and end with a `CLOSING BALANCE`
+* Has 2 lines of _headers_ with fields like bank type, client id, client name, etc. Then has n lines of items.
+* _Items_ start with an `OPENING BALANCE` and end with a `CLOSING BALANCE`
 * The record itself ends with `CLOSING BALANCE`
 
-=> see the "default" pdtParser contributed in `/resources/OSGI-INF/ldtparser-service.xml` for the values used to parse this ldt. Here we just put the fields needed for the example, assuming we are mapping to a custom document type.
+=> See the "default" pdtParser contributed in `/resources/OSGI-INF/ldtparser-service.xml` for the values used to parse this ldt. Here we just put the fields needed for the example, assuming we are mapping to the default `LDTRecord` document type.
 
-#### So, our contribution must define/declare:
+#### The contribution must define/declare:
 
 * A new parser with a unique name
 * Start/end record tokens
-* 2 regex and captured fields for the headers
-* 3 regex and captured fiels for the items
+* 2 regex and captured fields for the _headers_
+* 3 regex and captured fiels for the _items_
 * A mapping between the fields captured and XPaths in an `LDTRecord` document
 * The JSON properties we want when getting the JSON of the record
 
-#### Here are more details.
+#### Details.
 
-* **Declare the contribution** and a new parser:
+* **Declare the contribution** and a **new parser** with a unique name:
 
 ```
 <extension target="nuxeo.ldt.parser.service.LDTParser"
 		    point="ldtParser">
   <ldtParser>
+    <name>MyParser</name>
 ```
 
-* Give it a **unique name**: `<name>MyParser</name>`
 * Declare the **start/end of a record**:
 
 ```
@@ -99,9 +116,9 @@ $12345ABCD$    TYPE=BANK0003  CLIENT TYPE: B     TAX ID: 12345678901567    CLIEN
     <recordEndToken>CLOSING BALANCE    </recordEndToken>
 ```
 
-* Now **parse the headers**. We have 2 lines of header here:
-  * First one starts with the startRecordToken and has some fields we want to capture in a Regex:
-
+* Now **parse the _headers_**. We have 2 lines of _header_ here:
+  * First one starts with the `startRecordToken` and has some fields we want to capture in a Regex:
+ 
 ```
     <headers>
       <header>
@@ -113,8 +130,8 @@ $12345ABCD$    TYPE=BANK0003  CLIENT TYPE: B     TAX ID: 12345678901567    CLIEN
           <field>clientType</field>
           <field>taxId</field>
           <field>clientId</field>
-		</fields>
-	</header>
+        </fields>
+      </header>
 ```
 
   * Second has more info and fields we want to capture
@@ -134,7 +151,7 @@ $12345ABCD$    TYPE=BANK0003  CLIENT TYPE: B     TAX ID: 12345678901567    CLIEN
  </headers>
 ```
 
-* **Then we have items**. Here we have 3 kinds:
+* **Then we have _items_**. Here we have 3 kinds:
   * An opening balance:
 
 ```
@@ -224,15 +241,19 @@ $12345ABCD$    TYPE=BANK0003  CLIENT TYPE: B     TAX ID: 12345678901567    CLIEN
 This document type has:
 
 * The `ldtrecord` schema that is used internally to retrieve the record: ID of the source LDT document, the startBytes and the recordSize
-* Optionnaly, any other fields used in the XML configuration for the mapping (for example, a "statement:clientId", "statement:month", "statement:year", etc.
+* Optionally, any other fields used in the XML configuration for the mapping (for example, a "statement:clientId", "statement:month", "statement:year", etc.
+> [!NOTE]
+> There is no mapping for the _items_
 
-These documents are created in a container (doc type configurable, `recordsContainerDocType`) at same level than the LDT document itself. The title of this container is `{LDT document title}-Records`. This suffix also is configurable (`recordsContainerSuffix`).
+
+These documents are created in a container (doc type configurable, `recordsContainerDocType`) at the same level as the LDT document itself. The title of this container is `{LDT document title}-Records`. This suffix is also configurable (`recordsContainerSuffix`).
 
 The `Services.LDTParseAndCreateRecords` operation parses the input `Document` (whose `file:content` must store an LDT file) and creates as many `LDTRecord` as found in the LDT file. (doc type is configurable, see `recordDocType`. If using a custom one, it must have the `LDTRecord` facet).
 
 Typically, you would use these in a listener/Studio Event Handler when a new document containing an LDT file in its main blob is created. Of course we strongly recommend using an asynchronous-post commit event.
 
-ℹ️ An entry is added to `server.log` every 1,000 records. This is done at `INFO` level, so if you want to see this, change the log level for this class in the `log4j2.xml` file:
+> [!NOTE]
+> An entry is added to `server.log` every 1,000 _records_. This is done at `INFO` level, so if you want to see this, change the log level for this class in the `log4j2.xml` file:
 
 ```
 . . .
@@ -272,6 +293,27 @@ The plugin provides the following operations:
 
 
 
+## S3 `BlobProvider` Configuration
+
+Retrieval is Super Fast also when Using S3.
+
+As explained above (_Retrieving a Record inside the LDT File_), the plugin, when parsing an ldt file, creates documents and store retrieval information in the `ldtrecord`. This way, when a single record is requested, the plugin just gets the bytes without parsing the file.
+
+This works exactly the same if you store your binaries on S3 using [Nuxeop S3 Online Storage plugin](https://doc.nuxeo.com/nxdoc/amazon-s3-online-storage/), the plugin will directly read the `recordSize` bytes from the file on S3: No need to first download the file from S3 to local storage (typically an EBS column). This is extremely performant, because it makes no sense to download locally a 600MB file from S3 just to get 2KB from it. It would not scale : Imagine, 50 concurrent users asking their statement from 50. different big LDT files.
+
+It is transparent. The only thing to do is add the `allowByteRange` property to the configuration. The contribution to add is:
+
+```
+<require>s3</require>
+<extension target="org.nuxeo.ecm.core.blob.BlobManager" point="configuration">
+  <blobprovider name="default">
+    <property name="allowByteRange">true</property>
+  </blobprovider>
+</extension>
+```
+
+
+
 ## Build and run
 
 Without building Docker:
@@ -284,7 +326,8 @@ mvn clean install -DskipDocker=true
 
 ## Support
 
-**These features are not part of the Nuxeo Production platform.**
+> [!IMPORTANT]
+> These features are not part of the Nuxeo Production platform.**
 
 These solutions are provided for inspiration and we encourage customers to use them as code samples and learning resources.
 

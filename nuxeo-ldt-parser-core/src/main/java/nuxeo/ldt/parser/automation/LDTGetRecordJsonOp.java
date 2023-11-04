@@ -42,7 +42,7 @@ import nuxeo.ldt.parser.service.LDTParserService;
 import nuxeo.ldt.parser.service.elements.Record;
 
 @Operation(id = LDTGetRecordJsonOp.ID, category = Constants.CAT_DOCUMENT, label = "LDT: Get JSON record", description = ""
-        + "If passed, Input document must have the ldtrecord schema, the related LDT document must exist, "
+        + "Returns the JSON of a record. If passed, Input document must have the ldtrecord schema, the related LDT document must exist, "
         + "and current user must have read permission on it. Also, if passed, sourceLdtDocId/startOffset/recordSize are ignored."
         + " If input is not passed, then sourceLdtDocId/startOffset/recordSize are required")
 public class LDTGetRecordJsonOp {
