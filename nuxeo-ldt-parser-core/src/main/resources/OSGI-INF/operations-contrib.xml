@@ -2,7 +2,7 @@
 <component name="nuxeo.ldt.parser.operations">
   <!-- Operations -->
   <extension point="operations" target="org.nuxeo.ecm.core.operation.OperationServiceComponent">
-    <operation class="nuxeo.ldt.parser.automation.LDTParseAndCreateRecordsOp"></operation>
+    <operation class="nuxeo.ldt.parser.automation.LDTParseAndCreateDocumentsOp"></operation>
     <operation class="nuxeo.ldt.parser.automation.LDTGetRecordJsonOp"></operation>
   </extension>
 </component>

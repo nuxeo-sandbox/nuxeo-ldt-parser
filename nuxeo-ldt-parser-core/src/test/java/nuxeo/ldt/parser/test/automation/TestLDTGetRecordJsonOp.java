@@ -112,7 +112,7 @@ public class TestLDTGetRecordJsonOp {
         
         // 2. Create the LDTRecords, using the default parser
         LDTParser parser = ldtParserService.newParser(null);
-        parser.parseAndCreateRecords(ldtDoc);
+        parser.parseAndCreateDocuments(ldtDoc);
         transactionalFeature.nextTransaction();
 
         // * Get one LDTRecord

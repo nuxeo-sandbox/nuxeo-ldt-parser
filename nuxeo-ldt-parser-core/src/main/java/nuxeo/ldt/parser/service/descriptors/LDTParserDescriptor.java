@@ -23,10 +23,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.nuxeo.common.xmap.annotation.XNode;
 import org.nuxeo.common.xmap.annotation.XNodeList;
 import org.nuxeo.common.xmap.annotation.XNodeMap;
 import org.nuxeo.common.xmap.annotation.XObject;
+import org.nuxeo.ecm.core.api.NuxeoException;
 
 import nuxeo.ldt.parser.service.Constants;
 
@@ -37,6 +41,8 @@ import nuxeo.ldt.parser.service.Constants;
  */
 @XObject("ldtParser")
 public class LDTParserDescriptor {
+
+    private static final Logger log = LogManager.getLogger(LDTParserDescriptor.class);
 
     @XNode("name")
     protected String name = null;
@@ -57,13 +63,13 @@ public class LDTParserDescriptor {
 
     @XNode("useCallbackForItems")
     protected Boolean useCallbackForItems = false;
-    
+
     @XNode("useCallbackForRecord")
     protected Boolean useCallbackForRecord = false;
 
     @XNode("callbacksClass")
     protected Class<?> callbacksClass;
-    
+
     @XNodeList(value = "headers/header", type = LDTHeaderDescriptor[].class, componentType = LDTHeaderDescriptor.class)
     protected LDTHeaderDescriptor[] headers;
 
@@ -141,16 +147,16 @@ public class LDTParserDescriptor {
     public void setCallbacksClass(Class<?> klass) {
         callbacksClass = klass;
     }
-    
+
     public LDTHeaderDescriptor[] getHeaders() {
         return headers;
     }
 
     public List<String> getAllHeaderfields() {
-        
+
         List<String> finalList = new ArrayList<String>();
-        
-        for(LDTHeaderDescriptor headerDesc : headers) {
+
+        for (LDTHeaderDescriptor headerDesc : headers) {
             List<String> mergedList = new ArrayList<String>(headerDesc.getFields());
             finalList.addAll(mergedList);
         }
@@ -222,9 +228,39 @@ public class LDTParserDescriptor {
     public List<String> getRecordTitleFields() {
         return recordTitleFields;
     }
-    
+
     public LDTRecordJsonTemplateDescriptor getRecordJsonTemplate() {
         return recordJsonTemplate;
+    }
+
+    /**
+     * Doing simple sanity check on the descriptor
+     * 
+     * @since 2021
+     */
+    public void checkDescriptor(boolean thowError) {
+
+        if (StringUtils.isBlank(recordStartToken)) {
+            if (thowError) {
+                throw new NuxeoException("The configuration has no recordStartToken.");
+            }
+            log.warn("The configuration has no recordStartToken.");
+        }
+
+        if (StringUtils.isBlank(recordEndToken)) {
+            if (thowError) {
+                throw new NuxeoException("The configuration has no recordEndToken.");
+            }
+            log.warn("The configuration has no recordEndToken.");
+        }
+
+        if ((useCallbackForHeaders || useCallbackForItems || useCallbackForRecord) && callbacksClass == null) {
+            if (thowError) {
+                throw new NuxeoException(
+                        "The configuration has no callbacksClass, while asking to use at least one callback.");
+            }
+            log.warn("The configuration has no callbacksClass, while asking to use at least one callback.");
+        }
     }
 
 }

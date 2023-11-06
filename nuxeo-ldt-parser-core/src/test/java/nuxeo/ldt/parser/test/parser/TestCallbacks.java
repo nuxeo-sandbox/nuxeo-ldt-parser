@@ -49,7 +49,7 @@ public class TestCallbacks implements Callbacks {
         // Hard code a simple header
         fieldList = Arrays.asList("HEADER");
         fieldsAndValues = Map.of("HEADER", "12345");
-        HeaderLine header = new HeaderLine(fieldList, fieldsAndValues, 1, "first");
+        HeaderLine header = new HeaderLine(fieldList, fieldsAndValues, 1L, "first");
         headers.add(header);
 
         // Hard code a simple item

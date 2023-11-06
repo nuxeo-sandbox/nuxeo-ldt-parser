@@ -11,7 +11,6 @@ The parser aims to store only retrieval information and optional custom fields:
 
 So, still with the bank statement example, we would store only some bytes for retrieval and a couple fields for searching, but not the dozens of lines of transactions, these will be retrieved only when it is time to download a rendition of the statement, with all its lines of transaction.
 
- 
 ## Description
 
 > [!NOTE]
@@ -291,6 +290,100 @@ The plugin provides the following operations:
   * Fields of the JSON are defined in the XML configuration, using `recordJsonTemplate` (see above).
 * The operation received a `Document` having the `ldtrecord` schema. It then gets the related LDT document, and fetches only the required data from it (no need, for example, to download the file from S3 to parse it locally)
 
+## Example of Usage with Nuxeo Studio
+
+[Nuxeo Studio](https://doc.nuxeo.com/studio/nuxeo-studio/) is Nuxeo **Low-Code configuration tool**. If your LDT files don't need Java callback, the usage of the plugin is even easier:
+
+1. In Studio, add as many XML configurations as parsers you want to use (when you have different content for your LDT files)
+1. Use the `Services.LDTParseAndCreateDocuments` operation to create the Documents from the LDT file
+    * You would typically use an _async_ EventHandler for the `documentCreated` event, filtered on your document type, so the parsing is automatic. Make sure it is asynchronous
+1. If you just need to get the JSON, then call `Services.GetLDTJsonRecord` when needed
+2. If you need a different rendering:
+    * Get the record as JSON, then yse _freemarker_ and a template (see the example in the unit tests).
+    * For example, an HTML template
+    * Use Nuxeo Template Rendering (with freemarker) to render a word/pdf document
+    * . . . use any template you want
+    * The principle is to inject the values of the JSON
+
+Typically, and still with the banck statement example (as used in the unit test and the "default" parser), you would...
+
+* Insert values, like (see below for the usage of the `Context` object):
+
+```
+<div class="label">Bank Id</div><br/>
+<div>${Context.statement.bankId}</div>
+
+<div class="label">Date</div><br/>
+<div>${Context.statement.month}/${Context.statement.year}</div>
+```
+
+For items, using a table:
+
+```
+<table class="operations">
+  <#list Context.items as item>
+    <tr>
+      <td class="date">${item.date}</td>
+      <td>${item.label}</td>
+      <#if item.amount < 0>
+        <td class="amount negative">${item.amount}</td>
+      <#else>
+        <td class="amount">${item.amount}</td>
+      </#if>
+    </tr>
+  </#list>
+</table>
+```
+
+* Friom Studio, as `Services.GetLDTJsonRecord` returns a String, converted to JSON and `freemarker` expects more Java objects, you may need to "massage" a bit the values. Again, see the unit test for an example (automation-render-pdf-with-any2pdf.xml). Something like:
+
+```
+function run(input, params) {
+  // input is an LDT Record
+  var jsonBlob = Services.GetLDTJsonRecord(input, {'parserName': "MyCustomParser"});
+  var json = JSON.parse(jsonBlob.getString());
+
+  // Make sure items are ordered. In our "MySuctomParser", we defined the root of JSON as "statement"
+  json.statement.items.sort(function(a, b) {
+    return a.order - b.order;
+  });
+  
+  // We also add missing fields, set them to "" and convert the negative string to number
+  // This happens when different types of items are used (here, our opening balance items don't have a "customRef", for example)
+  json.statement.items.forEach(function(item) {
+    if(!item.label) {
+      item.label = "";
+    }
+    if(!item.ref) {
+      item.ref = "";
+    }
+    if(item.amount.endsWith("-")) {
+      item.amount = item.amount.replace("-", "");
+      item.amount = +item.amount;
+      item.amount *= -1;
+    } else {
+      item.amount = +item.amount;
+    }
+  });
+
+  // The template expects a "statement" context variable...
+  ctx.statement = json.statement;
+  // .. and an "items" Java array of objects, we need a conversion
+   ctx.items = Java.to(json.statement.items);
+
+  // Now we can render as html using our template.
+  // We use the input as a convenience (it is not modified)
+  var html = Render.Document(dummyDoc,{
+                    template: "template:BankStatementTemplate",
+                    filename: "statement.html",
+                    mimetype: "text/html",
+                    type: "ftl"
+                  });
+
+  // Return the html blob
+  return var;
+}
+```
 
 
 ## S3 `BlobProvider` Configuration
@@ -313,7 +406,6 @@ It is transparent. The only thing to do is add the `allowByteRange` property to 
 ```
 
 
-
 ## Build and run
 
 Without building Docker:
@@ -323,6 +415,10 @@ cd /path/to/nuxeo-ldt-parser
 mvn clean install -DskipDocker=true
 ```
 
+To test with a S3 BinaryStore, see the `testLDTParserWithS3BinaryStore` class. You need to setup the following environment variables:
+
+* For accessing AWS: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN` and `AWS_REGION`
+* Info on the bucket: `TEST_BUCKET` and `TEST_BUCKET_PREFIX`
 
 ## Support
 

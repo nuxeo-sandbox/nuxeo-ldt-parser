@@ -96,7 +96,7 @@ import java.util.stream.Collectors;
  * <li>When an LDT file is uploaded, either automatically (via listener) or "manualy", parse it and create as many
  * LDTRecord document type that needed, also using your custom fields (like a clientId, a taxId, …)<br>
  * This is done using {@code LDTParser#parseAndCreateStatements}, and/or the operation calling it
- * ({@link nuxeo.ldt.parser.automation.LDTParseAndCreateRecordsOp}<br>
+ * ({@link nuxeo.ldt.parser.automation.LDTParseAndCreateDocumentsOp}<br>
  * Configuration lets you define the document type to use, the fields to map, etc., see ldtarser-service.xml
  * </li>
  * <li>When a record is needed, just call @{code LDTParser#getRecord}, and then @{code Record#toJson}. From this json,
@@ -485,7 +485,7 @@ public class LDTParser {
      * @return
      * @since TODO
      */
-    public LDTInfo parseAndCreateRecords(DocumentModel inputLdtDoc) {
+    public LDTInfo parseAndCreateDocuments(DocumentModel inputLdtDoc) {
 
         LDTInfo ldtInfo = null;
 

@@ -28,6 +28,7 @@ import nuxeo.ldt.parser.service.elements.Record;
 
 import org.apache.commons.lang3.StringUtils;
 import org.nuxeo.ecm.core.api.Blob;
+import org.nuxeo.ecm.core.api.NuxeoException;
 import org.nuxeo.ecm.core.api.blobholder.BlobHolder;
 import org.nuxeo.ecm.core.api.blobholder.SimpleBlobHolder;
 import org.nuxeo.ecm.core.api.impl.blob.JSONBlob;
@@ -62,9 +63,9 @@ public class LDT2JSONConverter implements Converter {
         long recordSize = Long.parseLong(recordSizeStr);
 
         LDTParser parser = Framework.getService(LDTParserService.class).newParser(parserName);
-        Record record = parser.getRecord(blobHolder.getBlob(), startOffset, recordSize);
-
         try {
+            Record record = parser.getRecord(blobHolder.getBlob(), startOffset, recordSize);
+            
             String json = record.toJson();
             Blob jsonBlob = new JSONBlob(json);
             if (StringUtils.isBlank(targetfilename)) {
@@ -77,7 +78,7 @@ public class LDT2JSONConverter implements Converter {
     
             return new SimpleBlobHolder(jsonBlob);
             
-        } catch (JacksonException e) {
+        } catch (NuxeoException | JacksonException e) {
             throw new ConversionException(e);
         }
         

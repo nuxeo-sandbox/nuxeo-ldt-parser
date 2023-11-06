@@ -35,12 +35,12 @@ import nuxeo.ldt.parser.service.LDTParser;
 import nuxeo.ldt.parser.service.LDTParserService;
 import nuxeo.ldt.parser.service.LDTParser.LDTInfo;
 
-@Operation(id = LDTParseAndCreateRecordsOp.ID, category = Constants.CAT_SERVICES, label = "LDT: Parse and Create Records", description = "Parses the input LDT, reate as many AccountStatement as needed, update the LDT input doc with the info")
-public class LDTParseAndCreateRecordsOp {
+@Operation(id = LDTParseAndCreateDocumentsOp.ID, category = Constants.CAT_SERVICES, label = "LDT: Parse and Create Documents", description = "Parses the input LDT, reate as many LDTRecord (or other doctype, based on configuiration of the parser) as needed, update the LDT input doc with the info")
+public class LDTParseAndCreateDocumentsOp {
 
-    public static final String ID = "Services.LDTParseAndCreateRecords";
+    public static final String ID = "Services.LDTParseAndCreateDocuments";
     
-    private static final Logger log = LogManager.getLogger(LDTParseAndCreateRecordsOp.class);
+    private static final Logger log = LogManager.getLogger(LDTParseAndCreateDocumentsOp.class);
 
     @Context
     protected CoreSession session;
@@ -67,7 +67,7 @@ public class LDTParseAndCreateRecordsOp {
         
         LDTParser parser = ldtParserService.newParser(parserName);
         @SuppressWarnings("unused")
-        LDTInfo info = parser.parseAndCreateRecords(doc);
+        LDTInfo info = parser.parseAndCreateDocuments(doc);
         
         return doc;
     }

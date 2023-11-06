@@ -74,15 +74,14 @@ public class TestLDT2JsonConverter {
         
     }
 
-    @Ignore
     @Test(expected = ConversionException.class)
     public void testConversionFailure() {
         
         Blob blob = TestUtils.getSimpleTestFileBlob();
         HashMap<String, Serializable> params = new HashMap<>();
         // Dummy values
-        params.put("startOffset", "" + TestUtils.SIMPLELDT_RECORD2_STARTOFFSET);
-        params.put("recordSize","" + TestUtils.SIMPLELDT_RECORD2_RECORDSIZE);
+        params.put("startOffset", "123");
+        params.put("recordSize","87");
         params.put("targetFileName","test.json");
         
         conversionService.convert("ldt2json",new SimpleBlobHolder(blob),params);

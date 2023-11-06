@@ -44,7 +44,7 @@ import org.nuxeo.runtime.test.runner.Features;
 import org.nuxeo.runtime.test.runner.FeaturesRunner;
 import org.nuxeo.runtime.test.runner.TransactionalFeature;
 
-import nuxeo.ldt.parser.automation.LDTParseAndCreateRecordsOp;
+import nuxeo.ldt.parser.automation.LDTParseAndCreateDocumentsOp;
 import nuxeo.ldt.parser.service.descriptors.LDTParserDescriptor;
 import nuxeo.ldt.parser.test.TestUtils;
 import nuxeo.ldt.parser.service.LDTParser;
@@ -95,7 +95,7 @@ public class TestLDTParserOnDocument {
 
         OperationContext ctx = new OperationContext(coreSession);
         ctx.setInput(doc);
-        DocumentModel docResult = (DocumentModel) automationService.run(ctx, LDTParseAndCreateRecordsOp.ID);
+        DocumentModel docResult = (DocumentModel) automationService.run(ctx, LDTParseAndCreateDocumentsOp.ID);
         assertNotNull(docResult);
         // We may set some listeners for LDTRecord creation in the future, let's wait.
         transactionalFeature.nextTransaction();

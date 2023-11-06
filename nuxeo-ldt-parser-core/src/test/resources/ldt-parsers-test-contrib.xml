@@ -26,6 +26,11 @@
       <useCallbackForItems>true</useCallbackForItems>
       <callbacksClass>nuxeo.ldt.parser.test.parser.TestCallbacks</callbacksClass>
     </ldtParser>
+
+    <ldtParser>
+      <name>test-config-should-fail</name>
+      <!-- No recordStartToken, etc. -->
+    </ldtParser>
   </extension>
 
 </component>
