@@ -1,0 +1,144 @@
+<?xml version="1.0"?>
+<component name="nuxeo.ldt.parser.test.automation.callback">
+
+	<extension target="nuxeo.ldt.parser.service.LDTParser" point="ldtParser">
+		<ldtParser>
+			<name>test-automation-callback</name>
+			<recordStartToken>$12345ABCD$</recordStartToken>
+			<recordEndToken>CLOSING BALANCE </recordEndToken>
+
+			<parseItemAutomationCallback>javascript.parseItemAutomationCallback</parseItemAutomationCallback>
+			<!-- Just a simple header for the unit test. -->
+			<headers>
+				<header>
+					<name>firstLine</name>
+					<pattern>^\$12345ABCD\$ *TEST-REF: *([A-Z0-9]*)</pattern>
+					<fields>
+						<field>testRef</field>
+					</fields>
+				</header>
+			</headers>
+			
+			<!-- No Item definition, we pare them with automation -->
+		</ldtParser>
+	</extension>
+
+	<extension
+		target="org.nuxeo.automation.scripting.internals.AutomationScriptingComponent"
+		point="operation">
+
+		<scriptedOperation id="javascript.parseItemAutomationCallback">
+			<inputType>void</inputType>
+			<outputType>blob</outputType>
+			<category>javascript</category>
+			<description></description>
+			<script><![CDATA[/* In this example, the line can hold different values, sometimes not even present:
+
+2  01/03    OPENING BALANCE                                1000.00
+2  22/03    The super label              10O.00-            900.00
+2  25/03    Other                         50.00-            
+2  30/03    This one is special      12345678ABCDEF       100.00            950.00 
+2  01/03    CLOSING BALANCE                                 950.00
+
+=> Line 2 has an amout and the balance updated,
+   line 3 has an amount, no balance
+   line 4 has 6 groups, line type, date, label, some internal ref, the amount, then the balance
+   
+   The chain returns an extra field "UNIT_TEST", value "DONE", to detect it was correctly called in Unit Test
+*/
+function run(input, params) {
+  
+  var line = params.line;
+  var config = params.config;
+  var regex;
+  var match = null;
+  var jsonItem = {};
+  
+  // Opening/Closing Balance ?
+  if(line.indexOf("OPENING BALANCE            ") > 0 || line.indexOf("CLOSING BALANCE            ") > 0) {
+
+    regex = /(\d+)\s+(\d{2}\/\d{2})\s+(OPENING BALANCE|CLOSING BALANCE)\s+([\d.]+)/;
+    match = line.match(regex);
+    // Assume the pattern will match...
+    if(line.indexOf("OPENING BALANCE") > 0) {
+      jsonItem.type = "OpeningBalance";
+    } else {
+      jsonItem.type = "ClosingBalance";
+    }
+    jsonItem.fieldList = ["date", "amount"];
+    //(match[3] is OPENING or CLOSING BALANCE)
+    jsonItem.fieldsAndValues = [
+      {"field": "date", "value": match[2]},
+      {"field": "amount", "value": match[4]},
+      {"field": "UNIT_TEST", "value": "DONE"}
+    ];
+    
+    return org.nuxeo.ecm.core.api.Blobs.createJSONBlob(JSON.stringify(jsonItem));
+      
+  }
+  
+  // You should test from the most complex Regex to the simpler one.
+  // Could also use indexOf(), endsWith(), etc., of course
+      
+  // Try the biggest pattern, with 6 groups
+  regex = /(\d+)\s+(\d{2}\/\d{2})\s+([\w\s]+?)\s+([0-9A-Z\s-]+?)\s+([\d.]+)\s+([\d.]+-?)/;
+  match = line.match(regex);
+  if(match) {
+    jsonItem.type = "Item6Groups";
+    jsonItem.fieldList = ["date", "label", "ref", "amount"];
+    jsonItem.fieldsAndValues = [
+      {"field": "date", "value": match[2]},
+      {"field": "label", "value": match[3].trim()},
+      {"field": "ref", "value": match[4].trim()},
+      {"field": "amount", "value": match[5]},
+      {"field": "UNIT_TEST", "value": "DONE"}
+    ];
+    
+    return org.nuxeo.ecm.core.api.Blobs.createJSONBlob(JSON.stringify(jsonItem));
+  }
+  
+  // Pattern with 5 groups, line type, date, label, amount and balance
+  regex = /(\d+)\s+(\d{2}\/\d{2})\s+([\w\s]+)\s+([\d.]+-?)\s+([\d.]+-?)/;
+  match = line.match(regex);
+  if(match) {
+    jsonItem.type = "Item5Groups";
+    jsonItem.fieldList = ["date", "label", "ref", "amount"];
+    jsonItem.fieldsAndValues = [
+      {"field": "date", "value": match[2]},
+      {"field": "label", "value": match[3].trim()},
+      {"field": "ref", "value": ""},
+      {"field": "amount", "value": match[4]},
+      {"field": "UNIT_TEST", "value": "DONE"}
+    ];
+    
+    return org.nuxeo.ecm.core.api.Blobs.createJSONBlob(JSON.stringify(jsonItem));
+  }
+  
+  // Simple pattern, linetype, date, label, amount
+  regex = /(\d+)\s+(\d{2}\/\d{2})\s+([\w\s]+?)\s+([\d.]+-?)/;
+  match = line.match(regex);
+  if(match) {
+    jsonItem.type = "ItemSimple";
+    jsonItem.fieldList = ["date", "label", "ref", "amount"];
+    jsonItem.fieldsAndValues = [
+      {"field": "date", "value": match[2]},
+      {"field": "label", "value": match[3].trim()},
+      {"field": "ref", "value": ""},
+      {"field": "amount", "value": match[4]},
+      {"field": "UNIT_TEST", "value": "DONE"}
+    ];
+    
+    return org.nuxeo.ecm.core.api.Blobs.createJSONBlob(JSON.stringify(jsonItem));
+  }
+
+  // Give up.
+  return null;
+
+}]]></script>
+			<param type="string" name="line" />
+			<param type="string" name="config" />
+		</scriptedOperation>
+
+	</extension>
+
+</component>

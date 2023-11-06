@@ -8,7 +8,7 @@
       <recordStartToken>$12345ABCD$</recordStartToken>
       <recordEndToken>CLOSING BALANCE    </recordEndToken>
       <useCallbackForRecord>true</useCallbackForRecord>
-      <callbacksClass>nuxeo.ldt.parser.test.parser.TestCallbacks</callbacksClass>
+      <callbacksClass>nuxeo.ldt.parser.test.parser.CallbacksForTest</callbacksClass>
     </ldtParser>
 
     <ldtParser>
@@ -16,7 +16,7 @@
       <recordStartToken>$12345ABCD$</recordStartToken>
       <recordEndToken>CLOSING BALANCE    </recordEndToken>
       <useCallbackForHeaders>true</useCallbackForHeaders>
-      <callbacksClass>nuxeo.ldt.parser.test.parser.TestCallbacks</callbacksClass>
+      <callbacksClass>nuxeo.ldt.parser.test.parser.CallbacksForTest</callbacksClass>
     </ldtParser>
 
     <ldtParser>
@@ -24,7 +24,7 @@
       <recordStartToken>$12345ABCD$</recordStartToken>
       <recordEndToken>CLOSING BALANCE    </recordEndToken>
       <useCallbackForItems>true</useCallbackForItems>
-      <callbacksClass>nuxeo.ldt.parser.test.parser.TestCallbacks</callbacksClass>
+      <callbacksClass>nuxeo.ldt.parser.test.parser.CallbacksForTest</callbacksClass>
     </ldtParser>
 
     <ldtParser>

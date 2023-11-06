@@ -70,6 +70,34 @@
             <useCallbackForRecord>false</useCallbackForRecord>
             <!-- An example of callback -->
             <callbacksClass>nuxeo.ldt.parser.service.CallbacksExample</callbacksClass>
+            
+            <!-- Name an automation chain to use for callback when parsing an Item.
+                 it receives null a input and 2 parameters:
+                   - line: The line to parse
+                   - config: The LDTParserDescriptor (Java object, usable in the chain to read values)
+                 Notice there will be no CoreSession nor Document injected. Do not access the repository
+                 in your chain.
+                 
+                 The chain must return a JSONBlob describing an item object:
+                 {
+                   "type": "TheLineType",
+                   "fieldList": ["field1", "field2, "field3"], // String array:
+                   "fieldsAndValues": [ // array of objects key/value. ALL VALUES ARE STRING
+                     {"field": "field1", "value": "value1"},
+                     {"field": "field2", "value2": "value3"},
+                     {"field": "field3", "value4": "value3"}
+                   ]
+                 }
+                 =====================================
+                 IMPORTANT  *  IMPORTANT  *  IMPORTANT
+                 =====================================
+                 Calling automation for every item is slow (need to set up the whole automation machinery
+                 for every item), we certainly don't recommand it for production, but it can be useful for
+                 demos and quick POC.
+                 
+                 If useCallbackForItems is true, then we never call this chain
+                 <parseItemAutomationCallback>javascript.automationCallbackExample</parseItemAutomationCallback>
+                 -->
 			
             <!-- ================================================== -->
             <!-- PARSING HEADERS -->

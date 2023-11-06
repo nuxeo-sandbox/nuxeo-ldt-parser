@@ -69,6 +69,9 @@ public class LDTParserDescriptor {
 
     @XNode("callbacksClass")
     protected Class<?> callbacksClass;
+    
+    @XNode("parseItemAutomationCallback")
+    protected String parseItemAutomationCallback = null;
 
     @XNodeList(value = "headers/header", type = LDTHeaderDescriptor[].class, componentType = LDTHeaderDescriptor.class)
     protected LDTHeaderDescriptor[] headers;
@@ -142,6 +145,10 @@ public class LDTParserDescriptor {
 
     public Class<?> getCallbacksClass() {
         return callbacksClass;
+    }
+    
+    public String getParseItemAutomationCallback() {
+        return parseItemAutomationCallback;
     }
 
     public void setCallbacksClass(Class<?> klass) {

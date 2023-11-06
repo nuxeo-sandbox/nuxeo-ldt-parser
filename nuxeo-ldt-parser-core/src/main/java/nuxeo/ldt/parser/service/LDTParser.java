@@ -36,12 +36,16 @@ import org.apache.commons.io.LineIterator;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.nuxeo.ecm.automation.AutomationService;
+import org.nuxeo.ecm.automation.OperationContext;
+import org.nuxeo.ecm.automation.OperationException;
 import org.nuxeo.ecm.blob.s3.S3BlobProvider;
 import org.nuxeo.ecm.core.api.Blob;
 import org.nuxeo.ecm.core.api.CloseableFile;
 import org.nuxeo.ecm.core.api.CoreSession;
 import org.nuxeo.ecm.core.api.DocumentModel;
 import org.nuxeo.ecm.core.api.NuxeoException;
+import org.nuxeo.ecm.core.api.impl.blob.JSONBlob;
 import org.nuxeo.ecm.core.blob.BlobManager;
 import org.nuxeo.ecm.core.blob.BlobProvider;
 import org.nuxeo.ecm.core.blob.ByteRange;
@@ -60,6 +64,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -208,6 +213,25 @@ public class LDTParser {
 
         if (config.useCallbackForItems()) {
             return getCallbacks().parseItem(config, line);
+        }
+        
+        if(config.getParseItemAutomationCallback() != null) {
+            String chainId = config.getParseItemAutomationCallback();
+            
+            AutomationService as = Framework.getService(AutomationService.class);
+            OperationContext ctx = new OperationContext();
+            Map<String, Object> params = new HashMap<>();
+            params.put("line",  line);
+            params.put("config",  config);
+            try {
+                
+                JSONBlob jsonBlob = (JSONBlob) as.run(ctx, chainId, params);
+                return new Item(line, jsonBlob);
+                
+            } catch (OperationException e) {
+                throw new NuxeoException("Error while calling the <" + chainId + "> chain.", e);
+            }
+            
         }
 
         if (config.getDetailsLineMinSize() > 0 && line.length() < config.getDetailsLineMinSize()) {

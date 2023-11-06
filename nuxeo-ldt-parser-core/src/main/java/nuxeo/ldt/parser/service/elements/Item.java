@@ -19,14 +19,20 @@
  */
 package nuxeo.ldt.parser.service.elements;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.nuxeo.ecm.core.api.NuxeoException;
+import org.nuxeo.ecm.core.api.impl.blob.JSONBlob;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -55,10 +61,55 @@ public class Item {
     protected Map<String, String> fieldsAndValues = null;
 
     public Item(String line, String type, List<String> fieldList, Map<String, String> fieldsAndValues) {
+        
         this.line = line;
         this.type = type;
         this.fieldList = fieldList;
         this.fieldsAndValues = fieldsAndValues;
+        
+        if (fieldsAndValues == null || fieldsAndValues.size() < 1) {
+            // throw new NuxeoException("No fieldsAndValues set for the new Item.");
+            log.warn("No item fieldsAndValues set.");
+        }
+    }
+
+    /*
+     * Expected JSON:
+     * {
+     * "type": "TheLineType",
+     * "fieldList": ["field1", "field2, "field3"], // String array:
+     * "fieldsAndValues": [ // array of objects key/value. ALL VALUES ARE STRING
+     * {"field": "field1", "value": "value1"},
+     * {"field": "field2", "value2": "value3"},
+     * {"field": "field3", "value4": "value3"}
+     * ]
+     * }
+     */
+    public Item(String line, JSONBlob jsonBlob) {
+        
+        this.line = line;
+        
+        JSONObject json = new JSONObject(jsonBlob.getString());
+        
+        this.type = json.getString("type");
+        
+        JSONArray jsonArray = json.getJSONArray("fieldList");
+        fieldList = new ArrayList<String>();
+        for (int i = 0; i < jsonArray.length(); i++) {
+            fieldList.add(jsonArray.getString(i));
+        }
+        
+        jsonArray = json.getJSONArray("fieldsAndValues");
+        fieldsAndValues = new HashMap<String, String>();
+        for (int i = 0; i < jsonArray.length(); i++) {
+            JSONObject obj = jsonArray.getJSONObject(i);
+            fieldsAndValues.put(obj.getString("field"), obj.getString("value"));
+        }
+        
+        if (fieldsAndValues.size() < 1) {
+            // throw new NuxeoException("No fieldsAndValues set for the new Item.");
+            log.warn("No item fieldsAndValues set.");
+        }
     }
 
     public Item(String line, LDTParserDescriptor config) {
@@ -96,18 +147,11 @@ public class Item {
 
     public String toString() {
         StringBuilder str = new StringBuilder("Line:\n");
-        str.append(line)
-           .append("\nType: ")
-           .append(type)
-           .append("\nfieldsAndValues:\n");
+        str.append(line).append("\nType: ").append(type).append("\nfieldsAndValues:\n");
         for (Map.Entry<String, String> entry : fieldsAndValues.entrySet()) {
-            str.append("  ")
-               .append(entry.getKey())
-               .append(": ")
-               .append(entry.getValue())
-               .append("\n");
+            str.append("  ").append(entry.getKey()).append(": ").append(entry.getValue()).append("\n");
         }
-        
+
         return str.toString();
     }
 

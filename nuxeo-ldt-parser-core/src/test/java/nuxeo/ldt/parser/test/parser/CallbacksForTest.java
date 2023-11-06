@@ -37,7 +37,7 @@ import nuxeo.ldt.parser.service.elements.Record;
  * 
  * @since 2021
  */
-public class TestCallbacks implements Callbacks {
+public class CallbacksForTest implements Callbacks {
 
     @Override
     public Record parseRecord(LDTParserDescriptor config, List<String> lines) {

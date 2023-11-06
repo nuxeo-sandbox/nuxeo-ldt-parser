@@ -56,7 +56,7 @@ Typically, you contribute the LDTParserService, "ldtParser" extension point to d
  
 * The JSON template to use when reading a record inside the LDT
 * Document type(s) to create (they must be declared with the "LDTRecord" facet)
-* Callbacks (java) for fine tuning when needed (mainly, when a Regex can't resolve a line)
+* Callbacks (java) for fine tuning when needed (mainly, when a Regex can't resolve a line). There also is an Automation Callback for quick test/POC (see below "Automation Callback for Items")
 
  > [!NOTE]
 > See `ldtparser-service.xml` for a full example and all the configuration properties
@@ -266,7 +266,12 @@ Typically, you would use these in a listener/Studio Event Handler when a new doc
 
 
 ## Automation
-The plugin provides the following operations:
+The plugin provides:
+
+* Automation Operations
+* And an Automation Callback for quick test/POC (see below "Automation Callback for Items")
+
+Automation Operations are:
 
 #### `Services.LDTParseAndCreateRecords`
 * Input:
@@ -289,6 +294,95 @@ The plugin provides the following operations:
   * A JSON `Blob` containing the record
   * Fields of the JSON are defined in the XML configuration, using `recordJsonTemplate` (see above).
 * The operation received a `Document` having the `ldtrecord` schema. It then gets the related LDT document, and fetches only the required data from it (no need, for example, to download the file from S3 to parse it locally)
+
+
+## Callbacks
+
+#### Java Callbacks
+As it may happen that defining Regex Patterns may not fullfill a custom business rule, the plugin provides 3 callbacks that can be used instead: One for parsing a header, one for an item and one for the whole record.
+
+This is set at configuration level, and it is not possible to mix Regex pattern and callbacks. If a callback is defined it is used in place of the regex.
+
+So, you can set `useCallbackForHeaders`, `useCallbackForItems` and `useCallbackForRecord`. See the `Callbacks` interface for the signature, and `CallbacksExample` for an example (also look at the unit tests). Notice that if you use a callback for the whole record, the callbacks on header/item will never be called. 
+
+#### Automation Callback for Items
+For quick tests and POC, it may be convenient to use Automation. This is implemented only when parsing items (not headers, not the whole record), since headers should be a fixed format anyway.
+
+> [!WARNING]
+> The callback will be called for every line that is not a header. This is done only when getting a record inside the LDT file, not when parsing it to create all the `LDTRecord`. Still, for each line, all the machinery of Automation will be instantiated, which means it will be far slower that using a java callback.
+> 
+> If a record has a dozen items and there are not dozens, hundreds of concurrent request, it will be fine. But remember it does not scale. It is still very usefull for quick tests and POC.
+
+You set up the chain to call in the configuration, using the `parseItemAutomationCallback` configuration property. The chain receives no input and two parameters:
+
+* `line`, the line to parse
+* And `config`,  the `LDTParserDescriptor`, that allows, should you need so, for accessing the other configuration parameters (record start/end tokens for example)
+
+Your chain must return a `JSONBlob`, a JSON that defines all the properties of an `Item` object:
+
+```
+{
+  "type": "TheLineType",
+   "fieldList": ["field1", "field2, "field3"], // String array:
+   "fieldsAndValues": [ // array of objects key/value. ALL VALUES ARE STRING
+     {"field": "field1", "value": "value1"},
+     {"field": "field2", "value2": "value3"},
+     {"field": "field3", "value4": "value3"}
+   ]
+}
+```
+
+Here is a small example:
+
+```
+function run(input, params) {
+  
+  var line = params.line;
+  var config = params.config;
+  var regex;
+  var match = null;
+  var jsonItem = {};
+  
+  // =============================================
+  // Detect las line
+  // =============================================
+  if(line.indexOf(config.getRecordEndToken()) > -1) {
+    // Last item of the record, easy to parse with a Regex
+    regex = /(\d+)\s+(\d{2}\/\d{2})\s+CLOSING BALANCE\s+([\d.]+)/;
+    match = line.match(regex);
+    jsonItem.type = "ClosingBalance";
+    jsonItem.fieldList = ["date", "amount"];
+    jsonItem.fieldsAndValues = [
+      {"field": "date", "value": match[2]},
+      {"field": "amount", "value": match[3]},
+    ];
+      
+    return org.nuxeo.ecm.core.api.Blobs.createJSONBlob(JSON.stringify(jsonItem));
+  }
+  
+  // =============================================
+  // Something based on the length of the line
+  // =============================================
+  if(line.length < 60) {
+    return null;
+  }
+  
+  var date = line.substring(3, 8);
+  var label = line.substring(12, 50).trim();
+  var amount = line.length >= 61 ? line.substring(50, 61).trim() : line.substring(50, 60).trim();
+  var balance = line.length >= 80 ? line.substring(62, 81).trim() : null;
+  jsonItem.type = "Item";
+  jsonItem.fieldList = ["date", "label", "amount"];
+  jsonItem.fieldsAndValues = [
+    {"field": "date", "value": date},
+    {"field": "amount", "value": label},
+    {"field": "amount", "value": amount},
+  ];
+    
+  return org.nuxeo.ecm.core.api.Blobs.createJSONBlob(JSON.stringify(jsonItem));
+
+```
+
 
 ## Example of Usage with Nuxeo Studio
 
