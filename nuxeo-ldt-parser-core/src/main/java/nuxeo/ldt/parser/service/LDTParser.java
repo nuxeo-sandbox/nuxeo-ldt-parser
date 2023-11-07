@@ -362,6 +362,7 @@ public class LDTParser {
                 InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
                 LineIterator it = new LineIterator(reader)) {
 
+            // Go to start of record
             String line = it.nextLine();
             if (!isRecordStart(line)) {
                 boolean found = false;
@@ -380,7 +381,10 @@ public class LDTParser {
             }
 
             List<String> rawRecord = new ArrayList<>();
-
+            
+            // ==================================================
+            // Get the header(s)
+            // ==================================================
             ArrayList<HeaderLine> headers = new ArrayList<HeaderLine>();
             // Assume we will always have at least one header
             HeaderLine header = parseRecordHeader(line, 1);
@@ -388,24 +392,26 @@ public class LDTParser {
                 throw new NuxeoException("Malformed header line, no matching Pattern found for <" + line + ">");
             }
             rawRecord.add(line);
-
-            // Assume we have no more than 100 header lines...
-            for (int lineNumber = 2; lineNumber < 100; lineNumber++) {
+            int lineNumber = 1;
+            do {
                 line = it.nextLine();
+                rawRecord.add(line);
+                
+                lineNumber += 1;
                 header = parseRecordHeader(line, lineNumber);
                 if (header != null) {
                     headers.add(header);
-                    rawRecord.add(line);
-                } else {
-                    rawRecord.add(line);
-                    break;
                 }
-            }
+                
+            } while(header != null);
 
+            
+            // ==================================================
+            // Then the items
+            // ==================================================
             boolean reachedEnd = false;
             while (!reachedEnd && it.hasNext()) {
                 String item = it.nextLine();
-
                 if (isRecordStart(item)) {
                     // We have a header. Need to ignore all headers
                     // We don't check hasNext(): as long as we have not reached
@@ -426,6 +432,12 @@ public class LDTParser {
         } catch (IOException e) {
             throw new NuxeoException(e);
         }
+    }
+    
+    public Record getRecord(Blob blob, long startOffset, long recordSize, int firstPage, int lastPage) {
+        
+        Record record = getRecord(blob, startOffset, recordSize);
+        return record.buildForPageRange(firstPage, lastPage);
     }
 
     protected int getEOLLength(CloseableFile closFile) throws IOException {

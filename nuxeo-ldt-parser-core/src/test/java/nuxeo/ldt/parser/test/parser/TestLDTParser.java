@@ -328,7 +328,9 @@ public class TestLDTParser {
         
         assertEquals(TestUtils.SIMPLELDT_RECORD3_PAGE_COUNT, record.getPageCount());
         
-    }@Test
+    }
+    
+    @Test
     public void testMultiPageRecordToJson() throws Exception {
 
         Blob blob = TestUtils.getSimpleTestFileBlob();
@@ -342,6 +344,18 @@ public class TestLDTParser {
         JSONObject rootElement = mainJson.getJSONObject("record");
         
         assertEquals(TestUtils.SIMPLELDT_RECORD3_PAGE_COUNT, rootElement.getInt("pageCount"));
+        
+    }
+    
+    @Test
+    public void shouldGetRecordWithPageRange() {
+        
+        Blob blob = TestUtils.getSimpleTestFileBlob();
+        LDTParser parser = ldtParserService.newParser(null);
+        Record record = parser.getRecord(blob, TestUtils.SIMPLELDT_RECORD3_STARTOFFSET,
+                TestUtils.SIMPLELDT_RECORD3_RECORDSIZE);
+        assertNotNull(record);        
+        
         
     }
 

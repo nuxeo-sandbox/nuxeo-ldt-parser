@@ -124,7 +124,7 @@ public class TestLDT2JsonConverter {
         
         JSONObject mainJson = new JSONObject(jsonBlob.getString());
         JSONObject rootElement = mainJson.getJSONObject("record");
-        
+        assertEquals(2, rootElement.getInt("pageCount"));
         assertEquals(TestUtils.SIMPLELDT_RECORD3_MULTIPAGES_VALUES_MAP.get("clientId"), rootElement.get("clientId"));
         assertEquals(TestUtils.SIMPLELDT_RECORD3_MULTIPAGES_VALUES_MAP.get("taxId"), rootElement.get("taxId"));
         
