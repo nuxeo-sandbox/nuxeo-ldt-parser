@@ -55,10 +55,10 @@ public class CallbacksForTest implements Callbacks {
         // Hard code a simple item
         fieldList = Arrays.asList("ITEM_VALUE");
         fieldsAndValues = Map.of("ITEM_VALUE", "1234.56");
-        Item item = new Item("we do not care", "ITEM", fieldList, fieldsAndValues);
+        Item item = new Item("we do not care", "ITEM", fieldList, fieldsAndValues, false);
         items.add(item);
 
-        return new Record(headers, items);
+        return new Record(headers, items, 1);
     }
 
     @Override
@@ -75,7 +75,7 @@ public class CallbacksForTest implements Callbacks {
         List<String> fieldList = Arrays.asList("ITEM_VALUE");
         Map<String, String> fieldsAndValues = Map.of("ITEM_VALUE", "1234.56");
         
-        return new Item(line, "ITEM", fieldList, fieldsAndValues);
+        return new Item(line, "ITEM", fieldList, fieldsAndValues, false);
     }
 
 }

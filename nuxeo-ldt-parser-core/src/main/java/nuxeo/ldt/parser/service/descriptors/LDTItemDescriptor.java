@@ -37,6 +37,9 @@ public class LDTItemDescriptor {
     @XNode("type")
     protected String type = null;
     
+    @XNode("endOfPage")
+    protected Boolean endOfPage = false;
+    
     @XNode("pattern")
     protected String patternStr = null;
     
@@ -47,6 +50,10 @@ public class LDTItemDescriptor {
 
     public String getType() {
         return type;
+    }
+    
+    public boolean isEndOfPage() {
+        return endOfPage.booleanValue();
     }
 
     public Pattern getPattern() {

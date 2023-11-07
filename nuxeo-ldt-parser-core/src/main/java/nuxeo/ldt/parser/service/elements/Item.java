@@ -24,8 +24,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -57,16 +55,21 @@ public class Item {
 
     protected List<String> fieldList = null;
 
+    protected boolean isEndOfPage = false;
+
     @JsonProperty("values")
     protected Map<String, String> fieldsAndValues = null;
 
-    public Item(String line, String type, List<String> fieldList, Map<String, String> fieldsAndValues) {
-        
+    public Item(String line, String type, List<String> fieldList, Map<String, String> fieldsAndValues,
+            boolean isEndOfPage) {
+
         this.line = line;
         this.type = type;
         this.fieldList = fieldList;
         this.fieldsAndValues = fieldsAndValues;
-        
+
+        this.isEndOfPage = isEndOfPage;
+
         if (fieldsAndValues == null || fieldsAndValues.size() < 1) {
             // throw new NuxeoException("No fieldsAndValues set for the new Item.");
             log.warn("No item fieldsAndValues set.");
@@ -82,30 +85,33 @@ public class Item {
      * {"field": "field1", "value": "value1"},
      * {"field": "field2", "value2": "value3"},
      * {"field": "field3", "value4": "value3"}
-     * ]
+     * ],
+     * "isEndOfPage": true/false
      * }
      */
     public Item(String line, JSONBlob jsonBlob) {
-        
+
         this.line = line;
-        
+
         JSONObject json = new JSONObject(jsonBlob.getString());
-        
+
         this.type = json.getString("type");
-        
+
+        this.isEndOfPage = json.optBoolean("isEndOfPage");
+
         JSONArray jsonArray = json.getJSONArray("fieldList");
         fieldList = new ArrayList<String>();
         for (int i = 0; i < jsonArray.length(); i++) {
             fieldList.add(jsonArray.getString(i));
         }
-        
+
         jsonArray = json.getJSONArray("fieldsAndValues");
         fieldsAndValues = new HashMap<String, String>();
         for (int i = 0; i < jsonArray.length(); i++) {
             JSONObject obj = jsonArray.getJSONObject(i);
             fieldsAndValues.put(obj.getString("field"), obj.getString("value"));
         }
-        
+
         if (fieldsAndValues.size() < 1) {
             // throw new NuxeoException("No fieldsAndValues set for the new Item.");
             log.warn("No item fieldsAndValues set.");
@@ -134,6 +140,9 @@ public class Item {
                         fieldsAndValues.put(fieldList.get(i), m.group(i + 1).trim());
                     }
                 }
+                
+                this.isEndOfPage = oneDesc.isEndOfPage();
+                
                 break;
             }
         }
@@ -177,6 +186,10 @@ public class Item {
         }
 
         return null;
+    }
+
+    public boolean isEndOfPage() {
+        return this.isEndOfPage;
     }
 
 }

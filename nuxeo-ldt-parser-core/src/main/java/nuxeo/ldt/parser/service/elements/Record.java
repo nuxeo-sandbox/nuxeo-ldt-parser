@@ -19,6 +19,7 @@
  */
 package nuxeo.ldt.parser.service.elements;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -40,7 +41,7 @@ import org.json.JSONObject;
  */
 @JsonRootName(value = "record")
 public class Record {
-    
+
     protected LDTParser parser;
 
     @JsonProperty("headers")
@@ -48,67 +49,45 @@ public class Record {
 
     @JsonProperty("items")
     protected List<Item> items;
-    
-    public Record(List<HeaderLine> headers, List<Item> items) {
+
+    protected int pageCount = 1;
+
+    public Record(List<HeaderLine> headers, List<Item> items, int pageCount) {
         this.headers = headers;
         this.items = items;
+
+        if(pageCount == 0) {
+            pageCount = 1;
+        }
+        this.pageCount = pageCount;
     }
-    
+
+    public Record(LDTParser parser, List<HeaderLine> headers, List<Item> items, int pageCount) {
+        this.parser = parser;
+        this.headers = headers;
+        this.items = items;
+
+        if(pageCount == 0) {
+            pageCount = 1;
+        }
+        this.pageCount = pageCount;
+    }
+
     public void setParser(LDTParser parser) {
         parser = this.parser;
     }
 
-    public Record(LDTParser parser, List<HeaderLine> headers, List<Item> items) {
-        this.parser = parser;
-        this.headers = headers;
-        this.items = items;
-    }
-
-    public String toJson() throws JacksonException {
-        
-        LDTRecordJsonTemplateDescriptor templateDescriptor = parser.getDescriptor().getRecordJsonTemplate();
-        String rootName = templateDescriptor.getRootName();
-        JSONObject mainJson;
-        mainJson = new JSONObject();
-        JSONObject rootObject;
-        if(!StringUtils.isBlank(rootName) && !"null".equals(rootName.toLowerCase())) {
-            rootObject = new JSONObject();
-            mainJson.put(rootName, rootObject);
-        } else {
-            rootObject = mainJson;
-        }
-        
-        for(String field : templateDescriptor.getProperties()) {
-            rootObject.put(field, getHeadersValue(field));
-        }
-        
-        // Now the items
-        JSONArray jsonItems = new JSONArray();
-        int order = 0;
-        for(Item item : items) {
-            order += 1;
-            JSONObject oneJsonItem = new JSONObject();
-            oneJsonItem.put("order", order);
-            oneJsonItem.put("type", item.getType());
-            oneJsonItem.put("line", item.getLine());
-            for (Map.Entry<String, String> entry : item.getFieldsAndValues().entrySet()) {
-                oneJsonItem.put(entry.getKey(), entry.getValue());
-            }
-            
-            jsonItems.put(oneJsonItem);
-        }
-        rootObject.put("items", jsonItems);
-
-        return mainJson.toString();
+    public int getPageCount() {
+        return pageCount;
     }
 
     public String getHeadersValue(String key) {
 
         String value = null;
-        
-        for(HeaderLine header : headers) {
+
+        for (HeaderLine header : headers) {
             value = header.getValue(key);
-            if(value != null) {
+            if (value != null) {
                 return value;
             }
         }
@@ -119,24 +98,95 @@ public class Record {
     public List<Item> getItems() {
         return items;
     }
-    
-    public String toString() {
-        
-        StringBuilder builder = new StringBuilder();
-        
-        for(HeaderLine header : headers) {
-            builder.append("Header:\n")
-                   .append(header.toString())
-                   .append("\n");
+
+    public Record buildForPageRange(int firstPage, int lastPage) {
+
+        if (firstPage < 1) {
+            firstPage = 1;
+        }
+        if (lastPage > this.pageCount) {
+            lastPage = this.pageCount;
+        }
+        if (lastPage < firstPage) {
+            lastPage = firstPage;
+        }
+
+        List<Item> newItems = new ArrayList<Item>();
+        int pageCount = 0;
+        for (Item item : this.items) {
+            if (pageCount >= firstPage && pageCount <= lastPage) {
+                newItems.add(item);
+            }
+            if (item.isEndOfPage()) {
+                pageCount += 1;
+            }
+        }
+
+        return new Record(parser, headers, newItems, lastPage - firstPage + 1);
+
+    }
+
+    public String toJson() throws JacksonException {
+
+        LDTRecordJsonTemplateDescriptor templateDescriptor = parser.getDescriptor().getRecordJsonTemplate();
+        String rootName = templateDescriptor.getRootName();
+        JSONObject mainJson;
+        mainJson = new JSONObject();
+        JSONObject rootObject;
+        if (!StringUtils.isBlank(rootName) && !"null".equals(rootName.toLowerCase())) {
+            rootObject = new JSONObject();
+            mainJson.put(rootName, rootObject);
+        } else {
+            rootObject = mainJson;
         }
         
-        builder.append("\nItems: ")
-               .append(items.size())
-               .append("\n");
-        for(Item item : items) {
+        rootObject.put("pageCount", this.pageCount);
+
+        for (String field : templateDescriptor.getProperties()) {
+            rootObject.put(field, getHeadersValue(field));
+        }
+
+        // Now the items
+        JSONArray jsonItems = new JSONArray();
+        int order = 0;
+        int pageCount = 1;
+        for (Item item : items) {
+            order += 1;
+            JSONObject oneJsonItem = new JSONObject();
+            oneJsonItem.put("order", order);
+            oneJsonItem.put("type", item.getType());
+            oneJsonItem.put("line", item.getLine());
+            oneJsonItem.put("page", pageCount);
+            if(item.getFieldsAndValues() != null) {
+                for (Map.Entry<String, String> entry : item.getFieldsAndValues().entrySet()) {
+                    oneJsonItem.put(entry.getKey(), entry.getValue());
+                }
+            }
+            
+            if(item.isEndOfPage()) {
+                pageCount += 1;
+            }
+
+            jsonItems.put(oneJsonItem);
+        }
+        rootObject.put("items", jsonItems);
+
+        return mainJson.toString();
+    }
+
+    public String toString() {
+
+        StringBuilder builder = new StringBuilder();
+
+        for (HeaderLine header : headers) {
+            builder.append("Header:\n").append(header.toString()).append("\n");
+        }
+
+        builder.append("\nItems: ").append(items.size()).append("\n");
+        for (Item item : items) {
             builder.append(item.toString());
         }
-        
+
         return builder.toString();
     }
 

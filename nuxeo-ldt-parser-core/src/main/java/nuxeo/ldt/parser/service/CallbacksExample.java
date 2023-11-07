@@ -45,6 +45,7 @@ public class CallbacksExample implements Callbacks {
         List<String> fieldList = null;
         Map<String, String> fieldsAndValues = null;
         List<Item> items = new ArrayList<Item>();
+        int pageCount = 0;
         long lineNumber = 0;
         for(String line : lines) {
             lineNumber += 1;
@@ -65,26 +66,31 @@ public class CallbacksExample implements Callbacks {
                 if(headers.size() == 0) {
                     throw new NuxeoException("Should have at list one header");
                 }
+                boolean isEndOfPage = false;
                 // Now, parsing items. We may have some kind of "opening" line, "closing" line,
                 // 'detail" line, etc.:
                 if(line.indexOf("Opening") > -1) {
                     // ...parse the line, create an Item
-                } else if(line.indexOf("OtherLineType") > -1) {
+                } else if(line.indexOf("EndRecordToken") > -1) {
+                    pageCount += 1;
+                    isEndOfPage = true;
                     // ...parse the line, create an Item
-                } else if(line.indexOf("AndAnotherOne") > -1) {
+                } else if(line.indexOf("PARTIAL BALANCE") > -1) {
+                    pageCount += 1;
+                    isEndOfPage = true;
                     // ...parse the line, create an Item
-                } // etc.
-                // Here, we hard code the values (with no relation to line)
-                // So, warning; all items will be the same
-                fieldList = Arrays.asList("itemField1", "itemField2");
-                fieldsAndValues = Map.of("itemField1", "value1", "itemField2", "value2");
-                
-                items.add(new Item(line, "TheType", fieldList, fieldsAndValues));
+                } else {
+                    // Here, we hard code the values (with no relation to line)
+                    // So, warning; all items will be the same
+                    fieldList = Arrays.asList("itemField1", "itemField2");
+                    fieldsAndValues = Map.of("itemField1", "value1", "itemField2", "value2");
+                    
+                    items.add(new Item(line, "TheType", fieldList, fieldsAndValues, isEndOfPage));
+                }
             }
         }
         
-        
-        return new Record(headers, items);
+        return new Record(headers, items, pageCount);
     }
 
     @Override
@@ -122,7 +128,8 @@ public class CallbacksExample implements Callbacks {
         List<String> fieldList = Arrays.asList("testField1", "testField2");
         Map<String, String> fieldsAndValues = Map.of("testField1", "value1", "testField2", "value2");
         
-        return new Item(line, "TheType", fieldList, fieldsAndValues);
+        // In this example we also hard code isEndOfPage
+        return new Item(line, "TheType", fieldList, fieldsAndValues, false);
     }
 
 }

@@ -20,6 +20,7 @@
 
 package nuxeo.ldt.parser.test.converter;
 
+import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -37,6 +38,9 @@ import org.nuxeo.runtime.test.runner.FeaturesRunner;
 import nuxeo.ldt.parser.test.TestUtils;
 
 import javax.inject.Inject;
+
+import static org.junit.Assert.assertEquals;
+
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.HashMap;
@@ -98,6 +102,31 @@ public class TestLDT2JsonConverter {
         params.put("targetFileName","test.json");
         
         conversionService.convert("ldt2json", new SimpleBlobHolder(blob),params);
+        
+    }
+    
+    @Test
+    public void testConversionWithPageRange() throws IOException {
+
+        Blob blob = TestUtils.getSimpleTestFileBlob();
+        HashMap<String, Serializable> params = new HashMap<>();
+        // Use "default" parser
+        //params.put("parserName", null);
+        params.put("startOffset", "" + TestUtils.SIMPLELDT_RECORD3_STARTOFFSET);
+        params.put("recordSize","" + TestUtils.SIMPLELDT_RECORD3_RECORDSIZE);
+        params.put("firstPage", "2");
+        params.put("lastPage", "3");
+        params.put("targetFileName","test.json");
+        BlobHolder conversionResult = conversionService.convert("ldt2json", new SimpleBlobHolder(blob),params);
+        Blob jsonBlob = conversionResult.getBlob();
+        Assert.assertNotNull(jsonBlob);
+        Assert.assertEquals("test.json", jsonBlob.getFilename());
+        
+        JSONObject mainJson = new JSONObject(jsonBlob.getString());
+        JSONObject rootElement = mainJson.getJSONObject("record");
+        
+        assertEquals(TestUtils.SIMPLELDT_RECORD3_MULTIPAGES_VALUES_MAP.get("clientId"), rootElement.get("clientId"));
+        assertEquals(TestUtils.SIMPLELDT_RECORD3_MULTIPAGES_VALUES_MAP.get("taxId"), rootElement.get("taxId"));
         
     }
 

@@ -48,10 +48,10 @@ import nuxeo.ldt.parser.service.elements.Record;
  * Also, we are using the default mapper => see definition for fields and xpaths used
  * Expected values for test.LDT once an LDTRecord is created:
  * {"ldtrecord:startLineInLDT":1,"ldtrecord:startOffsetInLDT":0,"ldtrecord:recordSize":1692,"dc:description":"1234567890ABC12","dc:format":"12345678901234","dc:rights":"2023","dc:source":"MARCH"}
- * {"ldtrecord:startLineInLDT":27,"ldtrecord:startOffsetInLDT":1692,"ldtrecord:recordSize":1692,"dc:description":"9874567890ABC12","dc:format":"12345678901567","dc:rights":"2023","dc:source":"MARCH"}
- * {"ldtrecord:startLineInLDT":53,"ldtrecord:startOffsetInLDT":3384,"ldtrecord:recordSize":3385,"dc:description":"7890567890ABC12","dc:format":"12345678907890","dc:rights":"2023","dc:source":"MARCH"}
- * 
- * @since TODO
+ * {"ldtrecord:startLineInLDT":27,"ldtrecord:startOffsetInLDT":1692,"ldtrecord:recordSize":1759,"dc:description":"9874567890ABC12","dc:format":"12345678901567","dc:rights":"2023","dc:source":"MARCH"}
+ * {"ldtrecord:startLineInLDT":54,"ldtrecord:startOffsetInLDT":3451,"ldtrecord:recordSize":4606,"dc:description":"7890567890ABC12","dc:format":"12345678907890","dc:rights":"2023","dc:source":"MARCH"}
+ *
+ * @since 2021
  */
 public class TestUtils {
 
@@ -59,14 +59,25 @@ public class TestUtils {
 
     public static final long SIMPLELDT_RECORD2_STARTOFFSET = 1692;
 
-    public static final long SIMPLELDT_RECORD2_RECORDSIZE = 1692;
+    public static final long SIMPLELDT_RECORD2_RECORDSIZE = 1759;
+
+    public static final long SIMPLELDT_RECORD2_PAGE_COUNT = 1;
 
     // See "default" parser xml contribution
     public static final Map<String, String> SIMPLELDT_RECORD2_VALUES_MAP = Map.of("bankType", "BANK0003", "clientType",
             "F", "taxId", "12345678901567", "clientId", "9874567890ABC12", "bankId", "003090", "clientName",
             "Ah Que Coucou", "month", "MARCH", "year", "2023", "customRef", "098765000");
 
-    public static final long SIMPLELDT_RECORD2_ITEMS_COUNT = 22;
+    public static final long SIMPLELDT_RECORD2_ITEMS_COUNT = 23;
+
+    public static final long SIMPLELDT_RECORD3_STARTOFFSET = 3451;
+
+    public static final long SIMPLELDT_RECORD3_RECORDSIZE = 4606;
+
+    public static final long SIMPLELDT_RECORD3_PAGE_COUNT = 3;
+    
+    public static final Map<String, String> SIMPLELDT_RECORD3_MULTIPAGES_VALUES_MAP = Map.of("taxId", "12345678907890",
+            "clientId", "7890567890ABC12");
 
     public static File getSimpleTestFile() {
         File testFile = FileUtils.getResourceFileFromContext("test.LDT");
@@ -86,6 +97,8 @@ public class TestUtils {
     public static void checkSimpleTestFileRecord2Values(Record record) {
 
         assertNotNull(record);
+        
+        assertEquals(SIMPLELDT_RECORD2_PAGE_COUNT, record.getPageCount());
 
         assertEquals(SIMPLELDT_RECORD2_VALUES_MAP.get("bankType"), record.getHeadersValue("bankType"));
         assertEquals(SIMPLELDT_RECORD2_VALUES_MAP.get("clientType"), record.getHeadersValue("clientType"));
@@ -134,10 +147,10 @@ public class TestUtils {
         assertEquals("ClosingBalance", (String) item.get("type"));
         assertEquals("8575.55-", (String) item.get("amount"));
     }
-    
+
     // This is utility to generate some test html
     public static void record2Html() throws Exception {
-        
+
         Blob blob = TestUtils.getSimpleTestFileBlob();
         LDTParser parser = Framework.getService(LDTParserService.class).newParser(null);
         Record record = parser.getRecord(blob, TestUtils.SIMPLELDT_RECORD2_STARTOFFSET,
@@ -145,16 +158,16 @@ public class TestUtils {
 
         assertNotNull(record);
         String jsonStr = record.toJson();
-        
+
         JSONObject mainJson = new JSONObject(jsonStr);
         assertNotNull(mainJson);
 
         JSONObject rootElement = mainJson.getJSONObject("record");
 
         StringBuilder sb = new StringBuilder();
-        
+
         sb.append("<body>\n<main>\n");
-        
+
         sb.append("<div class=\"info\">\n");
         sb.append("<div>\n<div class=\"label\">Bank Id</div>\n<div>003090</div>\n</div>\n");
         sb.append("<div>\n<div class=\"label\">Tax Id</div>\n<div>12345678901567</div>\n</div>\n");
@@ -163,9 +176,9 @@ public class TestUtils {
         sb.append("<div class=\"nolabel\">MARCH-2023</div>\n");
         sb.append("<div class=\"nolabel\">098765000</div>\n");
         sb.append("</div >");
-        
+
         sb.append("<table class=\"operations\">\n");
-        if(true) {// Just for indentation
+        if (true) {// Just for indentation
             sb.append("<thead>\n");
             sb.append("<tr class=\"header\">\n");
             sb.append("<th class=\"date\">Date</th>\n");
@@ -174,7 +187,7 @@ public class TestUtils {
             sb.append("<th>Ref</th>\n");
             sb.append("</tr>\n");
             sb.append("</thead>\n");
-        
+
             sb.append("<tbody>\n");
             JSONArray items = rootElement.getJSONArray("items");
             items.forEach(item -> {
@@ -182,14 +195,14 @@ public class TestUtils {
                 sb.append("<tr>\n");
                 sb.append("<td class=\"date\">" + itemObj.getString("date") + "</td>\n");
                 String label = itemObj.optString("label");
-                if(StringUtils.isBlank(label)) {
+                if (StringUtils.isBlank(label)) {
                     sb.append("<td>" + itemObj.getString("type") + "</td>\n");
                 } else {
                     sb.append("<td>" + label + "</td>\n");
                 }
                 double amount;
                 String amountStr = itemObj.getString("amount");
-                if(amountStr.endsWith("-")) {
+                if (amountStr.endsWith("-")) {
                     amountStr = amountStr.replace("-", "");
                     amount = Double.valueOf(amountStr);
                     amount *= -1;
@@ -198,15 +211,15 @@ public class TestUtils {
                 }
                 sb.append("<td>" + amount + "</td>\n");
                 sb.append("<td>" + itemObj.optString("ref") + "</td>\n");
-                
+
                 sb.append("</tr>\n");
             });
             sb.append("</tbody>\n");
         }
         sb.append("</table>\n");
-        
+
         sb.append("</body>\n</main>\n");
-        
+
         String html = sb.toString();
         Blob b = new StringBlob(html);
         File f = new File("/Users/thibaud/Downloads/blah.txt");

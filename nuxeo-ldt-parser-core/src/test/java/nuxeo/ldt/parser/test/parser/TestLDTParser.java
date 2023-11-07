@@ -315,5 +315,31 @@ public class TestLDTParser {
         TestUtils.checkSimpleTestFileRecord2Values(jsonStr, false);
 
     }
+    
+    @Test
+    public void testMultiPageRecord() {
+
+        Blob blob = TestUtils.getSimpleTestFileBlob();
+        LDTParser parser = ldtParserService.newParser(null);
+        Record record = parser.getRecord(blob, TestUtils.SIMPLELDT_RECORD3_STARTOFFSET,
+                TestUtils.SIMPLELDT_RECORD3_RECORDSIZE);
+        assertNotNull(record);
+        
+        assertEquals(TestUtils.SIMPLELDT_RECORD3_PAGE_COUNT, record.getPageCount());
+        
+    }@Test
+    public void testMultiPageRecordToJson() {
+
+        Blob blob = TestUtils.getSimpleTestFileBlob();
+        LDTParser parser = ldtParserService.newParser(null);
+        Record record = parser.getRecord(blob, TestUtils.SIMPLELDT_RECORD3_STARTOFFSET,
+                TestUtils.SIMPLELDT_RECORD3_RECORDSIZE);
+        assertNotNull(record);
+        
+        assertEquals(TestUtils.SIMPLELDT_RECORD3_PAGE_COUNT, record.getPageCount());
+        
+        tester record to json et pageCount et tout
+        
+    }
 
 }

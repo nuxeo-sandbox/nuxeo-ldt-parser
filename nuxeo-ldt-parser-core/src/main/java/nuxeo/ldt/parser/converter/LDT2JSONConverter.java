@@ -53,6 +53,8 @@ public class LDT2JSONConverter implements Converter {
         String parserName = (String) map.get("parserName");
         String startOffsetStr = (String) map.get("startOffset");
         String recordSizeStr = (String) map.get("recordSize");
+        String firstPageStr = (String) map.get("firstPage");
+        String lastPageStr = (String) map.get("lastPage");
         String targetfilename = (String) map.get("targetFileName");
         
         if(StringUtils.isAnyEmpty(startOffsetStr, recordSizeStr)) {
@@ -61,10 +63,20 @@ public class LDT2JSONConverter implements Converter {
         
         long startOffset = Long.parseLong(startOffsetStr);
         long recordSize = Long.parseLong(recordSizeStr);
+        
+        int firstPage = 0;
+        int lastPage = 0;
+        if(!StringUtils.isBlank(firstPageStr) && !StringUtils.isBlank(lastPageStr)) {
+            firstPage = Integer.parseInt(firstPageStr);
+            lastPage = Integer.parseInt(lastPageStr);
+        }
 
         LDTParser parser = Framework.getService(LDTParserService.class).newParser(parserName);
         try {
             Record record = parser.getRecord(blobHolder.getBlob(), startOffset, recordSize);
+            if(firstPage > 0 && lastPage > 0) {
+                record = record.buildForPageRange(firstPage, lastPage);
+            }
             
             String json = record.toJson();
             Blob jsonBlob = new JSONBlob(json);

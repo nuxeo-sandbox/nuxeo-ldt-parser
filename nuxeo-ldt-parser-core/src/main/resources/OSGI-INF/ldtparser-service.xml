@@ -140,7 +140,12 @@
             <!-- ================================================== -->
             <!-- PARSING ITEMS -->
             <!-- ================================================== -->
-			<!-- In this default parser, we define lines for a bank statement -->
+			<!-- In this default parser, we define lines for a bank statement
+			     To handle multi pages int he LDT (several "records" for same headers),
+			     you can set the the isEndOfPage property. This way, each time the parser
+			     finds an item which is "endOfPage", it increments the pageCount by one.
+			     It always stops when the recordEnd is reached
+			     Here, we set endOfPage for the "IntermediateBalance" and "ClosingBalance" -->
 			<itemLine>
 				<!-- 01/12     OPENING BALANCE   1234.65 -->
 				<type>OpeningBalance</type>
@@ -154,6 +159,7 @@
 			
 			<itemLine>
 				<!-- 01/12     INTERMEDIATE BALANCE   1234.65 -->
+				<endOfPage>true</endOfPage>
 				<type>IntermediateBalance</type>
 				<pattern>^([0-9]*) *([0-9]{2}/[0-9]{2}) *INTERMEDIATE BALANCE *([0-9]*.[0-9]{2}-?) *</pattern>
 				<fields>
@@ -176,6 +182,7 @@
 			
 			<itemLine>
 				<!-- 01/12     CLOSING BALANCE   1234.65 -->
+				<endOfPage>true</endOfPage>
 				<type>ClosingBalance</type>
 				<pattern>^([0-9]*) *([0-9]{2}/[0-9]{2}) *CLOSING BALANCE *([0-9]*.[0-9]{2}-?) *</pattern>
 				<fields>

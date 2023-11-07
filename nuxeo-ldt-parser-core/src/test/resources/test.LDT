@@ -2,7 +2,7 @@ $12345ABCD$    TYPE=BANK0003  CLIENT TYPE: F     TAX ID: 12345678901234    CLIEN
 003090         John & Marie DOE          MARCH-2023      098765432
 2
 2
-2   01/03    OPENING BALANCE                                                    999.77
+2   01/03     OPENING BALANCE                                                  999.77
 2   01/03     MZ68 QN45 IS78 IS78           657.20-          NF99
 2   01/03     KT11 IS78 IS78                499.95-          MQ47
 2   02/03     RW60 EQ48                    1084.94-          HD29
@@ -23,12 +23,39 @@ $12345ABCD$    TYPE=BANK0003  CLIENT TYPE: F     TAX ID: 12345678901234    CLIEN
 2   26/03     AC72 EB81 IS78               1111.51-          NF99
 2   26/03     OV19 YM45 IS78 IS78 IS78      600.25-          MQ47
 2   26/03     UI61 IA28 IS78                761.30-          MQ47
-2 26/03    CLOSING BALANCE                                                   8575.55-
+2   26/03     CLOSING BALANCE                                                 8575.55-
 $12345ABCD$    TYPE=BANK0003  CLIENT TYPE: F     TAX ID: 12345678901567    CLIENT ID: 9874567890ABC12
 003090         Ah Que Coucou             MARCH-2023      098765000
 2
 2
-2   01/03    OPENING BALANCE                                                    999.77
+2   01/03     OPENING BALANCE                                                  999.77
+2   01/03     MZ68 QN45 IS78 IS78           657.20-          NF99
+2   01/03     KT11 IS78 IS78                499.95-          MQ47
+2   02/03     RW60 EQ48                    1084.94-          HD29
+2   04/03     BV97 ZH47                      27.00-          HO61
+2   08/03     NK31 RH52 IS78                658.75           XD25
+2   17/03     MR82 GQ22                      15.48-          BX97
+2   17/03     WD79 XJ33 IS78 IS78           536.00-          NF99
+2   18/03     GB27 RJ68                    1084.17-          MQ47
+2   18/03     JD80 QB89 IS78 IS78 IS78       77.90           HD29
+2   22/03     NC53 SX22                      75.89           HO61
+2   23/03     PX89 PV25 IS78               1002.54-          XD25
+2   23/03     WY60 VB47 IS78                928.07-          NF99
+2   23/03     KT22 XK12                     692.09-          MQ47
+2   23/03     ZI72 KM41 IS78 IS78           628.92-          HD29
+2   24/03     DC32 HP97                      97.31-          HO61
+2   25/03     AS23 KB27                     297.29-          HO61
+2   26/03     PF69 DX81 IS78                263.84-          XD25
+2   26/03     PF69 DX81 IS77                100.00-          XD26
+2   26/03     AC72 EB81 IS78               1111.51-          NF99
+2   26/03     OV19 YM45 IS78 IS78 IS78      600.25-          MQ47
+2   26/03     UI61 IA28 IS78                761.30-          MQ47
+2   26/03     CLOSING BALANCE                                                 8575.55-
+$12345ABCD$    TYPE=BANK0003  CLIENT TYPE: F     TAX ID: 12345678907890    CLIENT ID: 7890567890ABC12
+003090         Alors Donc Bon Voila-HOP  MARCH-2023      ABCD65432
+2
+2
+2   01/03     OPENING BALANCE                                                  999.77
 2   01/03     MZ68 QN45 IS78 IS78           657.20-          NF99
 2   01/03     KT11 IS78 IS78                499.95-          MQ47
 2   02/03     RW60 EQ48                    1084.94-          HD29
@@ -49,39 +76,12 @@ $12345ABCD$    TYPE=BANK0003  CLIENT TYPE: F     TAX ID: 12345678901567    CLIEN
 2   26/03     AC72 EB81 IS78               1111.51-          NF99
 2   26/03     OV19 YM45 IS78 IS78 IS78      600.25-          MQ47
 2   26/03     UI61 IA28 IS78                761.30-          MQ47
-2 26/03    CLOSING BALANCE                                                   8575.55-
+2   26/03     INTERMEDIATE BALANCE                                            8575.55-
 $12345ABCD$    TYPE=BANK0003  CLIENT TYPE: F     TAX ID: 12345678907890    CLIENT ID: 7890567890ABC12
 003090         Alors Donc Bon Voila-HOP  MARCH-2023      ABCD65432
 2
 2
-2   01/03    OPENING BALANCE                                                    999.77
-2   01/03     MZ68 QN45 IS78 IS78           657.20-          NF99
-2   01/03     KT11 IS78 IS78                499.95-          MQ47
-2   02/03     RW60 EQ48                    1084.94-          HD29
-2   04/03     BV97 ZH47                      27.00-          HO61
-2   08/03     NK31 RH52 IS78                658.75           XD25
-2   17/03     MR82 GQ22                      15.48-          BX97
-2   17/03     WD79 XJ33 IS78 IS78           536.00-          NF99
-2   18/03     GB27 RJ68                    1084.17-          MQ47
-2   18/03     JD80 QB89 IS78 IS78 IS78       77.90           HD29
-2   22/03     NC53 SX22                      75.89           HO61
-2   23/03     PX89 PV25 IS78               1002.54-          XD25
-2   23/03     WY60 VB47 IS78                928.07-          NF99
-2   23/03     KT22 XK12                     692.09-          MQ47
-2   23/03     ZI72 KM41 IS78 IS78           628.92-          HD29
-2   24/03     DC32 HP97                      97.31-          HO61
-2   25/03     AS23 KB27                     297.29-          HO61
-2   26/03     PF69 DX81 IS78                363.84-          XD25
-2   26/03     AC72 EB81 IS78               1111.51-          NF99
-2   26/03     OV19 YM45 IS78 IS78 IS78      600.25-          MQ47
-2   26/03     UI61 IA28 IS78                761.30-          MQ47
-2 26/03    INTERMEDIATE BALANCE                                              8575.55-
-$12345ABCD$    TYPE=BANK0003  CLIENT TYPE: F     TAX ID: 12345678907890    CLIENT ID: 7890567890ABC12
-003090         Alors Donc Bon Voila-HOP  MARCH-2023      ABCD65432
-2
-2
-2
-2 12/03    PREVIOUS BALANCE                                                  8575.55-
+2   12/03     PREVIOUS BALANCE                                                8575.55-
 2   01/03     MZ68 QN45 IS78 IS78         12657.20           NF99
 2   01/03     KT11 IS78 IS78                499.95-          MQ47
 2   02/03     RW60 EQ48                    1084.94-          HD29
@@ -102,4 +102,23 @@ $12345ABCD$    TYPE=BANK0003  CLIENT TYPE: F     TAX ID: 12345678907890    CLIEN
 2   26/03     AC72 EB81 IS78               1111.51-          NF99
 2   26/03     OV19 YM45 IS78 IS78 IS78      600.25-          MQ47
 2   26/03     UI61 IA28 IS78                761.30-          MQ47
-2 26/03    CLOSING BALANCE                                                   4738.85
+2   26/03     INTERMEDIATE BALANCE                                            4738.85
+$12345ABCD$    TYPE=BANK0003  CLIENT TYPE: F     TAX ID: 12345678907890    CLIENT ID: 7890567890ABC12
+003090         Alors Donc Bon Voila-HOP  MARCH-2023      ABCD65432
+2
+2
+2   12/03     PREVIOUS BALANCE                                                4738.85
+2   01/03     MZ68 QN45 IS78 IS78         12657.20           NF99
+2   01/03     KT11 IS78 IS78                499.95-          MQ47
+2   02/03     RW60 EQ48                    1084.94-          HD29
+2   04/03     BV97 ZH47                      27.00-          HO61
+2   08/03     NK31 RH52 IS78                658.75           XD25
+2   23/03     KT22 XK12                     692.09-          MQ47
+2   23/03     ZI72 KM41 IS78 IS78           628.92-          HD29
+2   24/03     DC32 HP97                      97.31-          HO61
+2   25/03     AS23 KB27                     297.29-          HO61
+2   26/03     PF69 DX81 IS78                363.84-          XD25
+2   26/03     AC72 EB81 IS78               1111.51-          NF99
+2   26/03     OV19 YM45 IS78 IS78 IS78      600.25-          MQ47
+2   26/03     UI61 IA28 IS78                761.30-          MQ47
+2   26/03     CLOSING BALANCE                                                 1234.56

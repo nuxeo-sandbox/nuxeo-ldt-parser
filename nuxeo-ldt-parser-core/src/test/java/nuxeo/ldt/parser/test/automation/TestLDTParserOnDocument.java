@@ -118,6 +118,17 @@ public class TestLDTParserOnDocument {
         String pathStr = "/" + LDT_DOC_NAME + desc.getRecordsContainerSuffix();
         PathRef recordsFolderRef = new PathRef(pathStr);
         assertTrue(coreSession.exists(recordsFolderRef));
+        
+        /*
+        String testNxql = "SELECT * FROM " + desc.getRecordDocType();
+        DocumentModelList testDocs = coreSession.query(testNxql);
+        String msg = "===========================================================================\n";
+        for(DocumentModel testDoc : testDocs) {
+            msg += LDTParser.documentToJsonString(testDoc, null) + "\n";
+        }
+        msg += "===========================================================================\n";
+        System.out.println(msg);
+        */
 
         // Just check one, as expected in the test ldt file.
         // (we test the second entry in the test.LDT file)

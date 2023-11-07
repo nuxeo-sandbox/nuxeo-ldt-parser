@@ -190,6 +190,12 @@ public class LDTParser {
         return line.indexOf(recordEndToken) > -1;
     }
 
+    /**
+     * @param line
+     * @param lineNumber
+     * @return a {@code HeaderLine} or {@code null} if the line is not a header
+     * @since 2021
+     */
     public HeaderLine parseRecordHeader(String line, long lineNumber) {
 
         if (config.useCallbackForHeaders()) {
@@ -214,24 +220,24 @@ public class LDTParser {
         if (config.useCallbackForItems()) {
             return getCallbacks().parseItem(config, line);
         }
-        
-        if(config.getParseItemAutomationCallback() != null) {
+
+        if (config.getParseItemAutomationCallback() != null) {
             String chainId = config.getParseItemAutomationCallback();
-            
+
             AutomationService as = Framework.getService(AutomationService.class);
             OperationContext ctx = new OperationContext();
             Map<String, Object> params = new HashMap<>();
-            params.put("line",  line);
-            params.put("config",  config);
+            params.put("line", line);
+            params.put("config", config);
             try {
-                
+
                 JSONBlob jsonBlob = (JSONBlob) as.run(ctx, chainId, params);
                 return new Item(line, jsonBlob);
-                
+
             } catch (OperationException e) {
                 throw new NuxeoException("Error while calling the <" + chainId + "> chain.", e);
             }
-            
+
         }
 
         if (config.getDetailsLineMinSize() > 0 && line.length() < config.getDetailsLineMinSize()) {
@@ -278,7 +284,16 @@ public class LDTParser {
                                     .map(this::parseItem)
                                     .filter(Objects::nonNull)
                                     .collect(Collectors.toList());
-        return new Record(this, headers, listItems);
+
+        // Counf pages
+        int pageCount = 0;
+        for (Item item : listItems) {
+            if (item.isEndOfPage()) {
+                pageCount += 1;
+            }
+        }
+
+        return new Record(this, headers, listItems, pageCount);
     }
 
     public Record getRecord(Blob blob, long startOffset, long recordSize) {
@@ -390,10 +405,19 @@ public class LDTParser {
             boolean reachedEnd = false;
             while (!reachedEnd && it.hasNext()) {
                 String item = it.nextLine();
+
                 if (isRecordStart(item)) {
+                    // We have a header. Need to ignore all headers
+                    // We don't check hasNext(): as long as we have not reached
+                    // the recordEnd token, we *must* have a line
+                    do {
+                        item = it.nextLine();
+                    } while (parseRecordHeader(line, 0) != null);
+                }
+                // We have an item
+                rawRecord.add(item);
+                if (isRecordEnd(item)) {
                     reachedEnd = true;
-                } else {
-                    rawRecord.add(item);
                 }
             }
 
@@ -670,7 +694,6 @@ public class LDTParser {
         List<String> xpaths = desc.getLDTRecordXPaths();
         for (String xpath : xpaths) {
             objNode.put(xpath, "" + recordDoc.getPropertyValue(xpath));
-
         }
 
         // JsonNode json = objectMapper.valueToTree(fields);
