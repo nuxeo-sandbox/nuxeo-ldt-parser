@@ -1,5 +1,8 @@
 # nuxeo-ldt-parser
 
+> [!NOTE]
+> This README is **W**ork **I**n **P**rogress. Most is described and explained, some parts are missing (i.e. using page range to extract ony some pages of a multi-pages LDT record)
+
 nuxeo-ldt-parser provides a **configurable service for parsing LDT files**.
 
 LDT files usually contain a lot of data, several thousands, sometimes hundreds of thousands, and this makes billions after a while (example: LDT file holding bank statements for all the customers).
