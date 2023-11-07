@@ -30,6 +30,7 @@ import nuxeo.ldt.parser.service.elements.HeaderLine;
 import nuxeo.ldt.parser.service.elements.Record;
 import nuxeo.ldt.parser.test.TestUtils;
 
+import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -328,17 +329,19 @@ public class TestLDTParser {
         assertEquals(TestUtils.SIMPLELDT_RECORD3_PAGE_COUNT, record.getPageCount());
         
     }@Test
-    public void testMultiPageRecordToJson() {
+    public void testMultiPageRecordToJson() throws Exception {
 
         Blob blob = TestUtils.getSimpleTestFileBlob();
         LDTParser parser = ldtParserService.newParser(null);
         Record record = parser.getRecord(blob, TestUtils.SIMPLELDT_RECORD3_STARTOFFSET,
                 TestUtils.SIMPLELDT_RECORD3_RECORDSIZE);
-        assertNotNull(record);
+        assertNotNull(record);        
         
-        assertEquals(TestUtils.SIMPLELDT_RECORD3_PAGE_COUNT, record.getPageCount());
+        String jsonStr = record.toJson();
+        JSONObject mainJson = new JSONObject(jsonStr);
+        JSONObject rootElement = mainJson.getJSONObject("record");
         
-        tester record to json et pageCount et tout
+        assertEquals(TestUtils.SIMPLELDT_RECORD3_PAGE_COUNT, rootElement.getInt("pageCount"));
         
     }
 
