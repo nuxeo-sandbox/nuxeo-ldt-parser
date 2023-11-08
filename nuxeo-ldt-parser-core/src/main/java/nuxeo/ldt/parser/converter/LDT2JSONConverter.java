@@ -40,33 +40,38 @@ import org.nuxeo.runtime.api.Framework;
 import java.io.Serializable;
 import java.util.Map;
 
+/**
+ * Get a record from an LDT file and return it as JSON, with properties based on the XML contribution.
+ * 
+ * @since 2021
+ */
 public class LDT2JSONConverter implements Converter {
 
     @Override
     public void init(ConverterDescriptor converterDescriptor) {
-        //nothing to do
+        // nothing to do
     }
 
     @Override
     public BlobHolder convert(BlobHolder blobHolder, Map<String, Serializable> map) throws ConversionException {
-        
+
         String parserName = (String) map.get("parserName");
         String startOffsetStr = (String) map.get("startOffset");
         String recordSizeStr = (String) map.get("recordSize");
         String firstPageStr = (String) map.get("firstPage");
         String lastPageStr = (String) map.get("lastPage");
         String targetfilename = (String) map.get("targetFileName");
-        
-        if(StringUtils.isAnyEmpty(startOffsetStr, recordSizeStr)) {
+
+        if (StringUtils.isAnyEmpty(startOffsetStr, recordSizeStr)) {
             throw new ConversionException("Missing the startOffset and/or the recordSize");
         }
-        
+
         long startOffset = Long.parseLong(startOffsetStr);
         long recordSize = Long.parseLong(recordSizeStr);
-        
+
         int firstPage = 0;
         int lastPage = 0;
-        if(!StringUtils.isBlank(firstPageStr) && !StringUtils.isBlank(lastPageStr)) {
+        if (!StringUtils.isBlank(firstPageStr) && !StringUtils.isBlank(lastPageStr)) {
             firstPage = Integer.parseInt(firstPageStr);
             lastPage = Integer.parseInt(lastPageStr);
         }
@@ -74,25 +79,25 @@ public class LDT2JSONConverter implements Converter {
         LDTParser parser = Framework.getService(LDTParserService.class).newParser(parserName);
         try {
             Record record = parser.getRecord(blobHolder.getBlob(), startOffset, recordSize);
-            if(firstPage > 0 && lastPage > 0) {
+            if (firstPage > 0 && lastPage > 0) {
                 record = record.buildForPageRange(firstPage, lastPage);
             }
-            
+
             String json = record.toJson();
             Blob jsonBlob = new JSONBlob(json);
             if (StringUtils.isBlank(targetfilename)) {
                 targetfilename = "output.json";
             }
-            if(!targetfilename.endsWith(".json")) {
+            if (!targetfilename.endsWith(".json")) {
                 targetfilename += ".json";
             }
             jsonBlob.setFilename(targetfilename);
-    
+
             return new SimpleBlobHolder(jsonBlob);
-            
+
         } catch (NuxeoException | JacksonException e) {
             throw new ConversionException(e);
         }
-        
+
     }
 }

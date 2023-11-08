@@ -9,7 +9,8 @@ public interface LDTParserService {
 
     /**
      * If name is null or "", uses "default"
-     * If no "ldtParser" configuration with name (or "default") is found, returns null
+     * If no "ldtParser" configuration with name (or "default") is found, returns null.
+     * See {@code LDTParser}
      * 
      * @param name
      * @return

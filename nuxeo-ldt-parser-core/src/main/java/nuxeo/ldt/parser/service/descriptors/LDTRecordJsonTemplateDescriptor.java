@@ -47,7 +47,7 @@ public class LDTRecordJsonTemplateDescriptor {
     /**
      * value can be empty or null (no root element)
      * @param value
-     * @since TODO
+     * @since 2021
      */
     public void setRootName(String value) {
         rootName = value;

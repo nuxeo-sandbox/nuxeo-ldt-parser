@@ -74,18 +74,19 @@ import java.util.stream.Collectors;
 
 /**
  * This class is in charge of parsing an LDT file and, depending on the caller's need, return a Record, a header of a
- * record, an item of a record, etc.
+ * record, an item of a record, the JSON of a record, etc.
  * <br>
- * It also can create on document/record, saving its start offset and record size for quick retrieval.
- * The retrieval is very fats because we just get the bytes of the record inside the LDT file, even if it is stored on
- * S3.
+ * It also can create one document/record {@code LDTParser#parseAndCreateDocuments} saving its start offset and record
+ * size for quick retrieval. The retrieval is very fast because we just get the bytes of the record inside the LDT file,
+ * even if it is stored on S3.
  * <br>
  * The behavior is based on the configuration. We provide a "default" configuration that must be used as an example,
  * since it contains, by essence, each ldt files will be different for each user of the plugin.
+ * See {@link resources/OSGI-INF/ldtparser-servoce.xml}
  * <br>
  * The main principle is based on the usage of:
  * - A start and end tokens to get the beginning and end of a record inside the file
- * - Regex to parse the lines and extract headers and items.
+ * - Regex to parse each line and extract headers and items.
  * <br>
  * The parser reads the file line by line and checks against the misc. configuration values to extract fields (a
  * "clientId", a "mont/year", etc.) and items of each record inside the ldt.
@@ -108,7 +109,7 @@ import java.util.stream.Collectors;
  * you can render the record as you want (for example, using Nuxeo Template Rendering)<br>
  * The configuration lets you define the JSON properties you want (see recordJsonTemplate in ldtarser-service.xml)<br>
  * The plugin has an example using a converter. The converter gets the record as json, and uses Nuxeo Template Rendering
- * to generate a pdf. It firyts creates an HTML from the json, then uwe WebkitHtmlTopPDF to generate a pdf.
+ * to generate a pdf. It first creates an HTML from the json, then uwe WebkitHtmlTopPDF to generate a pdf.
  * </li>
  * </ul>
  * 
@@ -178,22 +179,40 @@ public class LDTParser {
         return loadCallbacksClass();
     }
 
+    /**
+     * @return the {@code LDTParserDescriptor} for this parser
+     * @since 2021
+     */
     public LDTParserDescriptor getDescriptor() {
         return config;
     }
 
+    /**
+     * @param line
+     * @return {@code true} is the line <i>starts with</i> the startRecordToken, as defined in the configuration
+     * @since TODO
+     */
     public boolean isRecordStart(String line) {
         return line.startsWith(recordStartToken);
     }
 
+    /**
+     * @param line
+     * @return {@code true} is the line <i>contains</i> the endRecordToken, as defined in the configuration
+     * @since TODO
+     */
     public boolean isRecordEnd(String line) {
         return line.indexOf(recordEndToken) > -1;
     }
 
     /**
+     * Parses the line and returns a {@code HeaderLine} if the line is a header.
+     * If the configuration is set to use callbacks, the callback is used and in charge of
+     * returning the {@code HeaderLine} or {@code null}
+     * 
      * @param line
      * @param lineNumber
-     * @return a {@code HeaderLine} or {@code null} if the line is not a header
+     * @return a {@code HeaderLine} (or {@code null} if the line is not a header)
      * @since 2021
      */
     public HeaderLine parseRecordHeader(String line, long lineNumber) {
@@ -213,6 +232,15 @@ public class LDTParser {
 
     }
 
+    /**
+     * Parses the line and returns an {@code Item} if the line is an Item (aka not a header).
+     * If the configuration is set to use callbacks, the callback is used and in charge of
+     * returning the {@code Item} or {@code null}
+     * 
+     * @param line
+     * @return a {@code Item} (or {@code null} if the line is not an item)
+     * @since 2021
+     */
     public Item parseItem(String line) {
 
         // System.out.println("PARSE ITEM: <" + line + ">");
@@ -248,6 +276,14 @@ public class LDTParser {
         return new Item(line, config);
     }
 
+    /**
+     * Receives all the lines from startRecordToken to endRecordToken (both included) and returns a {@code Record}.
+     * If the configuration is set to use callbacks, the callback is used and in charge of returning the {@code Record}
+     * 
+     * @param lines
+     * @return a {@code Record}
+     * @since 2021
+     */
     public Record parseRecord(List<String> lines) {
 
         if (config.useCallbackForRecord()) {
@@ -296,6 +332,16 @@ public class LDTParser {
         return new Record(this, headers, listItems, pageCount);
     }
 
+    /**
+     * Fetches {@code recordSize} bytes from {@code startOffset} inside the blob. The blob must hold and LDT file.
+     * The method does not parse the whole file, it fetches directly the bytes, even if the file is stored on s3.
+     * 
+     * @param blob
+     * @param startOffset
+     * @param recordSize
+     * @return a @{code Record} or {@code null} if no record is found
+     * @since 2021
+     */
     public Record getRecord(Blob blob, long startOffset, long recordSize) {
 
         // recordSize < 100 is arbitrary, but the 2 first lines are > 100 anyway
@@ -381,7 +427,7 @@ public class LDTParser {
             }
 
             List<String> rawRecord = new ArrayList<>();
-            
+
             // ==================================================
             // Get the header(s)
             // ==================================================
@@ -396,16 +442,15 @@ public class LDTParser {
             do {
                 line = it.nextLine();
                 rawRecord.add(line);
-                
+
                 lineNumber += 1;
                 header = parseRecordHeader(line, lineNumber);
                 if (header != null) {
                     headers.add(header);
                 }
-                
-            } while(header != null);
 
-            
+            } while (header != null);
+
             // ==================================================
             // Then the items
             // ==================================================
@@ -433,11 +478,27 @@ public class LDTParser {
             throw new NuxeoException(e);
         }
     }
-    
+
+    /**
+     * Get a {@code Record} built from pages from a multi-page record.
+     * See {@code getRecord(Blob blob, long startOffset, long recordSize)} for details on parameters.
+     * 
+     * @param blob
+     * @param startOffset
+     * @param recordSize
+     * @param firstPage
+     * @param lastPage
+     * @return a @{code Record} or {@code null} if no record is found
+     * @since 2021
+     */
     public Record getRecord(Blob blob, long startOffset, long recordSize, int firstPage, int lastPage) {
-        
+
         Record record = getRecord(blob, startOffset, recordSize);
-        return record.buildForPageRange(firstPage, lastPage);
+        if (record != null) {
+            return record.buildForPageRange(firstPage, lastPage);
+        }
+
+        return null;
     }
 
     protected int getEOLLength(CloseableFile closFile) throws IOException {
@@ -528,22 +589,27 @@ public class LDTParser {
     }
 
     /**
-     * Create as many LDTRecords (or config.recordDocType) as found in the blob of the input inputLdtDoc.
+     * Create as many @{code LDTRecords} (or @{code config.recordDocType}) as found in the blob of the input
+     * inputLdtDoc.<br>
      * Update inputLdtDoc with LDT info
-     * Records are created at the same level than the LDT itself, in folder whose title is the title of the LDT +
-     * config.recordsContainerSuffix
+     * <br>
+     * Records are created at the same level than the LDT itself, in folder whose title is set to @{code title of the
+     * LDT + config.recordsContainerSuffix}<br>
+     * <br>
      * Each record:
-     * - Is created as a recordDocType document tyoe (LDTRecord by default)
-     * - Is filled with the retrieval info (start offset, size, line start) in the ldtrecord schema
-     * - And possibly with any field defined in the recordFieldsMapping mapping.
-     * - The dc-title is set to recordTitleFields
+     * <ul>
+     * <li>Is created as a @{code recordDocType} (see configuration) document type (@{code LDTRecord} by default)</li>
+     * <li>Is filled with the retrieval info (start offset, size, line start) in the @{code ldtrecord} schema</li>
+     * <li>And possibly with any field defined in the @{code recordFieldsMapping} mapping configuration.</li>
+     * <li>The dc:title is set to @{code recordTitleFields} (or the inputLdtDoc.title + a the sequence number)</li>
+     * </ul>
      * Caller is in charge of making sure permissions allow for creating content.
      * <br>
      * <b>WARNING</b>: Assume the file is UTF-8, even pure ASCII (no multibytes char)
      * 
      * @param inputLdtDoc, the input document whose file:content contains the LDT to parse
-     * @return
-     * @since TODO
+     * @return the @{code LDTInfo}
+     * @since 2021
      */
     public LDTInfo parseAndCreateDocuments(DocumentModel inputLdtDoc) {
 
@@ -671,7 +737,7 @@ public class LDTParser {
      * @param recordDoc
      * @param parser can be null (will use "default")
      * @return
-     * @since TODO
+     * @since 2021
      */
     public static String documentToJsonString(DocumentModel recordDoc, String parserName) {
         /*
