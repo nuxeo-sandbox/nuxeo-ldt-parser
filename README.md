@@ -23,14 +23,41 @@ So, still with the bank statement example, we would store only some bytes for re
 
 The plugin parses an LDT file and extracts _records_ based on configuration. _Records_ can be saved as Nuxeo `Documents`, with utility fields required for a fast retrieval (see below) plus any custom field you need (if the ldt holds bank statements, you would store client name, amounts, dates, …).
 
-The plugin parses the file line by line and expects 2 kinds of lines: A line is either a _header_ or an _item_:
+#### The plugin parses the file line by line. For each _record_, It expects:
 
+* A `startRecordToken` and an `endRecordToken`. Set in the XML contribution, they are required. This is how the plugin knows a record starts and ends, so it can parse and analyse all the lines between the start and the end (both included in the parsing)
+* And 2 kinds of lines: A line is either a _header_ or an _item_
+
+So, typically:
+```
+Header line with the startRecordToken
+0 or more header(s)
+Lines with items, last one contains the endRecordToken
+```
+A _record_ can hold several pages in the LDT. In this case you have the following (example with 3 pages):
+
+```
+Header line with the startRecordToken
+0 or more header(s)
+Lines with items, none contains the endRecordToken
+Header line with the startRecordToken
+0 or more header(s)
+Lines with items, none contains the endRecordToken
+Header line with the startRecordToken
+0 or more header(s)
+Lines with items, last one contains the endRecordToken
+```
+
+If you want to handle multi-pages _records_, do not forget to the the `endofPage` property for the item(s) in the XML configuration . See the example in ldtparser-service.xml, where the "IntermediateBalance" and the "ClosingBalance" items define `<endOfPage>true</endOfPage>`.
+
+#### Headers and Items:
 * A _header_ usually defines fields/values shared by the _record_. In a bank statement example, it will be the date of the statement, the client Id, the bank account, etc.
 
 > [!IMPORTANT]
 > The plugin expects that every _record_ has at least one header and this header starts with the `startRecordToken` defined in the contribution.
 
-* After the header(s), come the _items_. In the bank statement example, it will be several lines with the date, the reason, the amount, etc.
+* After the header(s), come the _items_. In the bank statement example, it will be several lines with the date, the reason, the amount, etc. Last line of the items (aka of the record) must contains the `endRecordToken`.
+  * A _record_ can have several pages (see below), the plugin gets all the lines between the `startRecordToken` and the `endRecordToken`
 
 
 ### Rendering a _Record_
@@ -49,10 +76,15 @@ So, when a _record_ needs to be fetched from the document, we just get the requi
 
 
 ### Configuration
-Typically, you contribute the LDTParserService, "ldtParser" extension point to define :
+> [!NOTE]
+> See `ldtparser-service.xml` for a full example and all the configuration properties, with detailed documentation.
 
-- The Start and End of _record_ tokens
+To configure a parser, you contribute the `LDTParserService`, `"ldtParser"` extension point to define:
+
+- The Start and End of _record_ tokens. These are required.
 - As many Regex as needed to parse the _header(s)_ and the _items_ of the _record_, with field mapping to your Nuxeo document (so you map the "clientId" header to the `statement:clientId` field of your document)
+
+  For _items_
 
   > [!IMPORTANT]
   > The plugin uses `java.util.regex.Pattern` for handling Regex. Make sure your expressions are compatible with this usage.
@@ -60,9 +92,6 @@ Typically, you contribute the LDTParserService, "ldtParser" extension point to d
 * The JSON template to use when reading a record inside the LDT
 * Document type(s) to create (they must be declared with the "LDTRecord" facet)
 * Callbacks (java) for fine tuning when needed (mainly, when a Regex can't resolve a line). There also is an Automation Callback for quick test/POC (see below "Automation Callback for Items")
-
- > [!NOTE]
-> See `ldtparser-service.xml` for a full example and all the configuration properties
 
 
 ## Simple example with 2 records
@@ -289,14 +318,22 @@ Automation Operations are:
 
 
 #### `Services.GetLDTJsonRecord`
+(See below for details on input and parameters)
 * Input:
-  * A `Document` having the ù LDTRecord` facet (and, thus, schema)
-* Parameter:
-  * `parserName`, string. Must be the name of an "ldtParser" contribution. If not passed or empty, the operation uses the `"default"` configuration
+  * optional.
+* Parameters:
+  * `parserName`, string, optional. Must be the name of an "ldtParser" contribution. If not passed or empty, the operation uses the `"default"` configuration
+  * `startOffset`, long, optional . 
+  * `recordSize`, long, optional. 
+  * `firstPage`, long, optional. 
+  * `lastPage`, long, optional. 
 * Output:
   * A JSON `Blob` containing the record
   * Fields of the JSON are defined in the XML configuration, using `recordJsonTemplate` (see above).
-* The operation received a `Document` having the `ldtrecord` schema. It then gets the related LDT document, and fetches only the required data from it (no need, for example, to download the file from S3 to parse it locally)
+
+ Input is a document (optional). If passed, it must have the ldtrecord schema, the related LDT document must exist, and current user must have read permission on it. Also, if Input is passed, `sourceLdtDocId`/`startOffset`/`recordSize` are ignored (the operation reads the values from the `ldtrecord` schema).
+
+ If input is not passed, then `sourceLdtDocId`/`startOffset`/`recordSize` are required.
 
 
 ## Callbacks
@@ -347,7 +384,7 @@ function run(input, params) {
   var jsonItem = {};
   
   // =============================================
-  // Detect las line
+  // Detect last line
   // =============================================
   if(line.indexOf(config.getRecordEndToken()) > -1) {
     // Last item of the record, easy to parse with a Regex

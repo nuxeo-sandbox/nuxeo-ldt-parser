@@ -42,9 +42,10 @@ import nuxeo.ldt.parser.service.LDTParserService;
 import nuxeo.ldt.parser.service.elements.Record;
 
 @Operation(id = LDTGetRecordJsonOp.ID, category = Constants.CAT_DOCUMENT, label = "LDT: Get JSON record", description = ""
-        + "Returns the JSON of a record. If passed, Input document must have the ldtrecord schema, the related LDT document must exist, "
-        + "and current user must have read permission on it. Also, if passed, sourceLdtDocId/startOffset/recordSize are ignored."
-        + " If input is not passed, then sourceLdtDocId/startOffset/recordSize are required")
+        + "Returns the JSON of a record. Input is a document (optional). If passed, it must have the ldtrecord schema, "
+        + "the related LDT document must exist, and current user must have read permission on it. "
+        + "Also, if Input is passed, sourceLdtDocId/startOffset/recordSize are ignored. "
+        + "If input is not passed, then sourceLdtDocId/startOffset/recordSize are required.")
 public class LDTGetRecordJsonOp {
 
     public static final String ID = "Services.GetLDTJsonRecord";
@@ -69,6 +70,12 @@ public class LDTGetRecordJsonOp {
     @Param(name = "recordSize", required = false)
     protected Long recordSize;
 
+    @Param(name = "firstPage", required = false)
+    protected Long firstPage;
+
+    @Param(name = "lastPage", required = false)
+    protected Long lastPage;
+
     protected Blob getRecordJson(String ldtDocId, Long startOffset, Long recordSize) throws JacksonException {
 
         if (StringUtils.isBlank(ldtDocId)) {
@@ -92,8 +99,10 @@ public class LDTGetRecordJsonOp {
         }
 
         LDTParser parser = ldtParserService.newParser(parserName);
-
         Record record = parser.getRecord(ldtBlob, startOffset, recordSize);
+        if(firstPage != null && lastPage != null) {
+            record = record.buildForPageRange(firstPage.intValue(), lastPage.intValue());
+        }
 
         String recordJsonStr = record.toJson();
         return new JSONBlob(recordJsonStr);
