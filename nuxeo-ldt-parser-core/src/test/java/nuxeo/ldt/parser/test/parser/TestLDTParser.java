@@ -56,10 +56,7 @@ import javax.inject.Inject;
  * WARNING: The misc test files with .ldt data have content that is specially tested here, like
  * recordSize expected, exact values for clientId/taxId, etc.
  * => DO NOT CHANGE THE FILES (or also change the test code)
- * Expected values for test.LDT:
- * {"ldtrecord:startLineInLDT":1,"ldtrecord:startOffsetInLDT":0,"ldtrecord:recordSize":3921,"dc:description":"1234567890ABC12","dc:format":"12345678901234","dc:rights":"2023","dc:source":"MARCH"}
- * {"ldtrecord:startLineInLDT":25,"ldtrecord:startOffsetInLDT":3921,"ldtrecord:recordSize":10126,"dc:description":"9874567890ABC12","dc:format":"12345678901567","dc:rights":"2023","dc:source":"MARCH"}
- * {"ldtrecord:startLineInLDT":76,"ldtrecord:startOffsetInLDT":14047,"ldtrecord:recordSize":17733,"dc:description":"7890567890ABC12","dc:format":"12345678907890","dc:rights":"2023","dc:source":"MARCH"}
+ * => See TestUtils for details
  * 
  * @since 2021
  */

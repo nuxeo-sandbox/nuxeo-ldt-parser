@@ -30,6 +30,7 @@ import nuxeo.ldt.parser.service.elements.HeaderLine;
 import nuxeo.ldt.parser.service.elements.Item;
 import nuxeo.ldt.parser.service.elements.Record;
 import nuxeo.ldt.parser.service.elements.RecordInfo;
+import nuxeo.ldt.parser.service.utils.LDTParserRecordStream;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
@@ -40,12 +41,15 @@ import org.nuxeo.ecm.automation.AutomationService;
 import org.nuxeo.ecm.automation.OperationContext;
 import org.nuxeo.ecm.automation.OperationException;
 import org.nuxeo.ecm.blob.s3.S3BlobProvider;
+import org.nuxeo.ecm.blob.s3.S3BlobStore;
 import org.nuxeo.ecm.core.api.Blob;
+import org.nuxeo.ecm.core.api.Blobs;
 import org.nuxeo.ecm.core.api.CloseableFile;
 import org.nuxeo.ecm.core.api.CoreSession;
 import org.nuxeo.ecm.core.api.DocumentModel;
 import org.nuxeo.ecm.core.api.NuxeoException;
 import org.nuxeo.ecm.core.api.impl.blob.JSONBlob;
+import org.nuxeo.ecm.core.blob.AbstractBlobStore;
 import org.nuxeo.ecm.core.blob.BlobManager;
 import org.nuxeo.ecm.core.blob.BlobProvider;
 import org.nuxeo.ecm.core.blob.ByteRange;
@@ -62,6 +66,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -372,55 +377,13 @@ public class LDTParser {
         // Get the String of the record
         // ==================================================
         String recordStr = null;
-        // Fill recordStr from the the blob.
-        // Check the blob, If on S3, get the bytes by range...
-        BlobManager blobManager = Framework.getService(BlobManager.class);
-        BlobProvider blobProvider = blobManager.getBlobProvider(blob);
-        if (hasS3BlobProviderClass() && blobProvider instanceof S3BlobProvider) {
-            S3BlobProvider s3BlobProvider = (S3BlobProvider) blobProvider;
-
-            if (!s3BlobProvider.allowByteRange()) {
-                throw new NuxeoException("The s3BlobProvider should allow ByteRange.");
-            }
-            String key = ((ManagedBlob) blob).getKey();
-            ByteRange range = ByteRange.inclusive(startOffset, startOffset + recordSize);
-
-            try (InputStream stream = s3BlobProvider.getStream(key, range)) {
-                ByteArrayOutputStream result = new ByteArrayOutputStream();
-                byte[] buffer = new byte[1024];
-                int length;
-                while ((length = stream.read(buffer)) != -1) {
-                    result.write(buffer, 0, length);
-                }
-                recordStr = result.toString(StandardCharsets.UTF_8.name());
-
-            } catch (IOException e) {
-                throw new NuxeoException("Error reading the blob with a ByteRange.", e);
-            }
-        }
-        // ...else (not in S3 storage):
-        if (recordStr == null) {
-            if (!noS3BlobProviderWarnLogged) {
-                String msg = "\n==================================================\n";
-                msg += "The BlobProvider is not a S3BlobProvider, but a ";
-                msg += (blobProvider == null ? "generic provider" : blobProvider.getClass().getCanonicalName()) + ".\n";
-                msg += "=> Not getting the record by ByteRange, which may be not efficient and not scalable if the blob is not already stored locally.\n";
-                msg += "==================================================\n";
-                log.warn(msg);
-                noS3BlobProviderWarnLogged = true;
-            }
-            try (InputStream is = blob.getStream()) {
-                long skipped = is.skip(startOffset);
-                if (skipped != startOffset) {
-                    throw new NuxeoException("Could not jump to the startOffset of " + startOffset);
-                }
-
-                byte[] recordBytes = is.readNBytes((int) recordSize);
-                recordStr = new String(recordBytes, StandardCharsets.UTF_8);
-
-            } catch (IOException e) {
-                throw new NuxeoException(e);
-            }
+        
+        ByteRange range = ByteRange.inclusive(startOffset, startOffset + recordSize);
+        try (InputStream stream = LDTParserRecordStream.getStream(blob, range)) {
+            byte[] recordBytes = stream.readNBytes((int) recordSize);
+            recordStr = new String(recordBytes, StandardCharsets.UTF_8);
+        } catch(IOException e) {
+            throw new NuxeoException("Error reading the blob with a ByteRange.", e);
         }
 
         // Not found. And no exception => most likely invalid range/size.
