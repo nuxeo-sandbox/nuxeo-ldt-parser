@@ -135,6 +135,10 @@ public class LDTParser {
 
     protected long lineCount = 0;
 
+    protected static int checkS3BlobProviderClass = -1;
+
+    protected static boolean noS3BlobProviderWarnLogged = false;
+
     public LDTParser(LDTParserDescriptor config) {
         super();
 
@@ -144,6 +148,20 @@ public class LDTParser {
         this.recordEndToken = config.getRecordEndToken();
 
         loadCallbacksClass();
+    }
+
+    protected boolean hasS3BlobProviderClass() {
+        if (checkS3BlobProviderClass == -1) {
+            try {
+                @SuppressWarnings("unused")
+                Class<?> theClass = Class.forName("org.nuxeo.ecm.blob.s3.S3BlobProvider");
+                checkS3BlobProviderClass = 1;
+            } catch (ClassNotFoundException e) {
+                checkS3BlobProviderClass = 0;
+            }
+        }
+
+        return checkS3BlobProviderClass == 1;
     }
 
     public String getName() {
@@ -344,8 +362,8 @@ public class LDTParser {
      */
     public Record getRecord(Blob blob, long startOffset, long recordSize) {
 
-        // recordSize < 100 is arbitrary, but the 2 first lines are > 100 anyway
-        if (startOffset < 0 || recordSize < 100) {
+        // a recordsize of 1, or even 10 or 100 is likely an error, but we can't make 100% sure.
+        if (startOffset < 0 || recordSize < 1) {
             throw new NuxeoException(
                     "getRecord: Invalid startOffest (" + startOffset + ") or recordSize (" + recordSize + ")");
         }
@@ -358,7 +376,7 @@ public class LDTParser {
         // Check the blob, If on S3, get the bytes by range...
         BlobManager blobManager = Framework.getService(BlobManager.class);
         BlobProvider blobProvider = blobManager.getBlobProvider(blob);
-        if (blobProvider instanceof S3BlobProvider) {
+        if (hasS3BlobProviderClass() && blobProvider instanceof S3BlobProvider) {
             S3BlobProvider s3BlobProvider = (S3BlobProvider) blobProvider;
 
             if (!s3BlobProvider.allowByteRange()) {
@@ -382,6 +400,15 @@ public class LDTParser {
         }
         // ...else (not in S3 storage):
         if (recordStr == null) {
+            if (!noS3BlobProviderWarnLogged) {
+                String msg = "\n==================================================\n";
+                msg += "The BlobProvider is not a S3BlobProvider, but a ";
+                msg += (blobProvider == null ? "generic provider" : blobProvider.getClass().getCanonicalName()) + ".\n";
+                msg += "=> Not getting the record by ByteRange, which may be not efficient and not scalable if the blob is not already stored locally.\n";
+                msg += "==================================================\n";
+                log.warn(msg);
+                noS3BlobProviderWarnLogged = true;
+            }
             try (InputStream is = blob.getStream()) {
                 long skipped = is.skip(startOffset);
                 if (skipped != startOffset) {
