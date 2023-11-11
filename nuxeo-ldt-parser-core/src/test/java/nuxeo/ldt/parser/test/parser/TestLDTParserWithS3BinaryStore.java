@@ -107,6 +107,9 @@ public class TestLDTParserWithS3BinaryStore {
         assertEquals(TEST_BLOB_PROVIDER_ID + ':' + digest, resultBlob.getKey());
 
         LDTParser parser = ldtParserService.newParser(null);
+        // Actually, we have no way to make sure the record was downloaded by byterange...
+        // It's when debugging, setting a breakpoint, following the code that we can make
+        // sure it does.
         Record record = parser.getRecord(resultBlob, TestUtils.SIMPLELDT_RECORD2_STARTOFFSET,
                 TestUtils.SIMPLELDT_RECORD2_RECORDSIZE);
         assertNotNull(record);
