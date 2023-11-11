@@ -22,6 +22,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.nuxeo.ecm.blob.s3.S3BlobProvider;
 import org.nuxeo.ecm.blob.s3.S3BlobStore;
 import org.nuxeo.ecm.core.api.Blob;
@@ -35,23 +37,25 @@ import org.nuxeo.ecm.core.blob.ManagedBlob;
 import org.nuxeo.runtime.api.Framework;
 
 /**
- * When reading a record inside an LDT File, we want to be able to get read only the bytes we need.
+ * When reading a record inside an LDT File, we want to be able to get only the bytes we need.
  * This means if the blobs are stored on S3, we must get the bytes by range, so S3 gives us these
  * bytes and we don't have to download all the file to parse it locally.
  * <br>
  * Unfortunately, when using the S3 Binary Manager, blobProvider.getStream(key, range) leads to Nuxeo
  * downloading the whole file, because S3BlobStore#getStream(key) (with a key including the range)
- * hard codes the return of an unknow stream, which leads the caller to download the file, and we
+ * hard codes the return to an unknow stream, which leads the caller to download the file, and we
  * don't want that.
- * So we need to explicitely read the blob with range, doing some casting when using S3, etc.
+ * So we need to explicitly read the blob with range, doing some casting when using S3, etc.
  * 
  * @since 2021
  */
 public class LDTParserRecordStream {
+    
+    private static final Logger log = LogManager.getLogger(LDTParserRecordStream.class);
 
     protected static int checkS3BlobProviderClass = -1;
 
-    protected static boolean noS3BlobProviderWarnLogged = false;
+    protected static boolean usingS3WithRangeLogged = false;
 
     protected static boolean hasS3BlobProviderClass() {
         if (checkS3BlobProviderClass == -1) {
@@ -74,7 +78,7 @@ public class LDTParserRecordStream {
         BlobManager blobManager = Framework.getService(BlobManager.class);
         BlobProvider blobProvider = blobManager.getBlobProvider(blob);
 
-        if (blobProvider == null) { // Mainly Unit test, but could be code with a temp FileBlob for example
+        if (blobProvider == null) { // Ex.: A temp FileBlob for example, not stored in a BinaryStore
             stream = blob.getStream();
             long skipped = stream.skip(range.getStart());
             if (skipped != range.getStart()) {
@@ -103,10 +107,14 @@ public class LDTParserRecordStream {
             // (as is done when blobProvider.getStream(key, range))
             keyWithRange = keyWithRange.replace(s3BlobProvider.blobProviderId + ":", "");
             if (blobStore.readBlob(keyWithRange, path)) {
+                if(!usingS3WithRangeLogged) {
+                    usingS3WithRangeLogged = true;
+                    log.info("Correctly using S3 with a range (this is logged only once.)");
+                }
                 stream = recordFileBlob.getStream();
             } else {
                 // See source code. false is returned only if the key was missing...
-                throw new NuxeoException("Error reading the blob with a ByteRange, readBlob() returned false.");
+                throw new NuxeoException("Error reading the blob <" + key + "> with a ByteRange, readBlob() returned false, check the log.");
             }
 
         } else if (blobProvider.allowByteRange()) {
