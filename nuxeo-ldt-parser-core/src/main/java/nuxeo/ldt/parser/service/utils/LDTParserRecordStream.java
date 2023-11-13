@@ -20,16 +20,12 @@ package nuxeo.ldt.parser.service.utils;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Path;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.nuxeo.ecm.blob.s3.S3BlobProvider;
-import org.nuxeo.ecm.blob.s3.S3BlobStore;
 import org.nuxeo.ecm.core.api.Blob;
-import org.nuxeo.ecm.core.api.Blobs;
 import org.nuxeo.ecm.core.api.NuxeoException;
-import org.nuxeo.ecm.core.blob.AbstractBlobStore;
 import org.nuxeo.ecm.core.blob.BlobManager;
 import org.nuxeo.ecm.core.blob.BlobProvider;
 import org.nuxeo.ecm.core.blob.ByteRange;
@@ -41,21 +37,36 @@ import org.nuxeo.runtime.api.Framework;
  * This means if the blobs are stored on S3, we must get the bytes by range, so S3 gives us these
  * bytes and we don't have to download all the file to parse it locally.
  * <br>
- * Unfortunately, when using the S3 Binary Manager, blobProvider.getStream(key, range) leads to Nuxeo
- * downloading the whole file, because S3BlobStore#getStream(key) (with a key including the range)
- * hard codes the return to an unknow stream, which leads the caller to download the file, and we
- * don't want that.
- * So we need to explicitly read the blob with range, doing some casting when using S3, etc.
+ * Nuxeo does all this for us, also handling local cache: To get a stream on this byte range, it
+ * first checks if it's already in the local cache (the key contains the byte range, making it unique).
+ * If not, it downloads only the bytes from S3 and save them to a temp and cached file. If we request
+ * the same, it will be there.
+ * (notice in production, it is very unklikely we request the same record before the end of life of
+ * the file in the cache, except in tests (but a cient, for example, will rarely download 2 times the
+ * same bank statement one after the other. May happen though mainly if the fonrt end has some bugs ;-))
+ * <br>
+ * So, we let Nuxeo handles all this. Notice that it means we don't know for sure if it gets the byte
+ * range from S3 but it's ok, getting the 2k bytes form a local stored file is perfectly fine.
+ * <br>
+ * If you want to make sure the bytes are fecthed from S3 with ByteRange, then activate debug level
+ * for {@code org.nuxeo.ecm.blob.s3.S3BlobStore}, its {@code readBlob} logs good info.
+ * <br>
+ * This class also handles other cases, mainly found in unit test (like a FileBlob, not part of a BlobStore)
+ * <br>
+ * Also, <b>IMPORTANT</b> (see the README): When using S3 for blob storage, do not forget to allowByteRange. If you
+ * don't, anyway, you will get an error.
+ * This class also handles a warning when using S3BlobProvider with no byte range (it will still get the stream, but
+ * downlopads the while file)
  * 
  * @since 2021
  */
 public class LDTParserRecordStream {
-    
+
     private static final Logger log = LogManager.getLogger(LDTParserRecordStream.class);
 
-    protected static int checkS3BlobProviderClass = -1;
+    protected static boolean usingS3WithNoRangeLogged = false;
 
-    protected static boolean usingS3WithRangeLogged = false;
+    protected static int checkS3BlobProviderClass = -1;
 
     protected static boolean hasS3BlobProviderClass() {
         if (checkS3BlobProviderClass == -1) {
@@ -91,43 +102,27 @@ public class LDTParserRecordStream {
         ManagedBlob managedBlob = (ManagedBlob) blob;
         String key = managedBlob.getKey();
 
-        // If it is a S3BlobProvider, we have to workaround (see class doc)
-        if (hasS3BlobProviderClass() && blobProvider instanceof S3BlobProvider) {
-            S3BlobProvider s3BlobProvider = (S3BlobProvider) blobProvider;
-            if (!s3BlobProvider.allowByteRange()) {
-                throw new NuxeoException("The s3BlobProvider should allow ByteRange.");
+        if (blobProvider.allowByteRange()) {
+            // This is where Nuxeo does all the job if we have a S3BlobProvider wth ByteRange allowed.
+            return blobProvider.getStream(key, range);
+        } else if (hasS3BlobProviderClass() && blobProvider instanceof S3BlobProvider) {
+            if(!usingS3WithNoRangeLogged) {
+                usingS3WithNoRangeLogged = true;
+                String msg = "\nWARNING ==========================================\n";
+                msg += "Using S3 Blob Provider without allowing byteRange. The blob is downloaded from S3, this is not efficient.";
+                msg += "\n==================================================\n";
+                log.warn(msg);
             }
+        }
 
-            String keyWithRange = AbstractBlobStore.setByteRangeInKey(key, range);
-            S3BlobStore blobStore = (S3BlobStore) s3BlobProvider.store;
-
-            Blob recordFileBlob = Blobs.createBlobWithExtension(".txt");
-            Path path = recordFileBlob.getFile().toPath();
-            // We also need to remove the provider id prefix, for sure
-            // (as is done when blobProvider.getStream(key, range))
-            keyWithRange = keyWithRange.replace(s3BlobProvider.blobProviderId + ":", "");
-            if (blobStore.readBlob(keyWithRange, path)) {
-                if(!usingS3WithRangeLogged) {
-                    usingS3WithRangeLogged = true;
-                    log.info("Correctly using S3 with a range (this is logged only once.)");
-                }
-                stream = recordFileBlob.getStream();
-            } else {
-                // See source code. false is returned only if the key was missing...
-                throw new NuxeoException("Error reading the blob <" + key + "> with a ByteRange, readBlob() returned false, check the log.");
-            }
-
-        } else if (blobProvider.allowByteRange()) {
-            stream = blobProvider.getStream(key, range);
-        } else {
-            stream = blobProvider.getStream(managedBlob);
-            if(stream == null) { // Possible an not an error
-                stream = blob.getStream();
-            }
-            long skipped = stream.skip(range.getStart());
-            if (skipped != range.getStart()) {
-                throw new NuxeoException("Could not jump to the startOffset of " + range.getStart());
-            }
+        // BlobProvider does not allow ByteRange
+        stream = blobProvider.getStream(managedBlob);
+        if (stream == null) { // Not an error with a ManagedBlob
+            stream = blob.getStream();
+        }
+        long skipped = stream.skip(range.getStart());
+        if (skipped != range.getStart()) {
+            throw new NuxeoException("Could not jump to the startOffset of " + range.getStart());
         }
 
         return stream;

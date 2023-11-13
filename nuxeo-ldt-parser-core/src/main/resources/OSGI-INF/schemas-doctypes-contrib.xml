@@ -17,7 +17,7 @@
 			<facet name="LDTRecord" />
 			<schema name="dublincore" />
 			<schema name="common" />
-			<schema name="uuid" />
+			<schema name="uid" />
 		</doctype>
 	</extension>
 
