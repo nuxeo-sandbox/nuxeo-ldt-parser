@@ -56,7 +56,7 @@ import org.nuxeo.runtime.api.Framework;
  * Also, <b>IMPORTANT</b> (see the README): When using S3 for blob storage, do not forget to allowByteRange. If you
  * don't, anyway, you will get an error.
  * This class also handles a warning when using S3BlobProvider with no byte range (it will still get the stream, but
- * downlopads the while file)
+ * downloads the whole file, which is not optimized)
  * 
  * @since 2021
  */
@@ -105,14 +105,12 @@ public class LDTParserRecordStream {
         if (blobProvider.allowByteRange()) {
             // This is where Nuxeo does all the job if we have a S3BlobProvider wth ByteRange allowed.
             return blobProvider.getStream(key, range);
-        } else if (hasS3BlobProviderClass() && blobProvider instanceof S3BlobProvider) {
-            if(!usingS3WithNoRangeLogged) {
-                usingS3WithNoRangeLogged = true;
-                String msg = "\nWARNING ==========================================\n";
-                msg += "Using S3 Blob Provider without allowing byteRange. The blob is downloaded from S3, this is not efficient.";
-                msg += "\n==================================================\n";
-                log.warn(msg);
-            }
+        } else if (!usingS3WithNoRangeLogged && hasS3BlobProviderClass() && blobProvider instanceof S3BlobProvider) {
+            usingS3WithNoRangeLogged = true;
+            String msg = "\nWARNING ==========================================\n";
+            msg += "Using S3 Blob Provider without allowing byteRange. The blob is downloaded from S3, this is not efficient.";
+            msg += "\n==================================================\n";
+            log.warn(msg);
         }
 
         // BlobProvider does not allow ByteRange
