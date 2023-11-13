@@ -21,16 +21,22 @@ package nuxeo.ldt.parser.service.utils;
 import java.io.IOException;
 import java.io.InputStream;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.nuxeo.ecm.blob.s3.S3BlobProvider;
 import org.nuxeo.ecm.core.api.Blob;
+import org.nuxeo.ecm.core.api.Blobs;
 import org.nuxeo.ecm.core.api.NuxeoException;
 import org.nuxeo.ecm.core.blob.BlobManager;
 import org.nuxeo.ecm.core.blob.BlobProvider;
 import org.nuxeo.ecm.core.blob.ByteRange;
 import org.nuxeo.ecm.core.blob.ManagedBlob;
 import org.nuxeo.runtime.api.Framework;
+
+import com.amazonaws.AmazonClientException;
+import com.amazonaws.services.s3.model.GetObjectRequest;
+import com.amazonaws.services.s3.transfer.Download;
 
 /**
  * When reading a record inside an LDT File, we want to be able to get only the bytes we need.
@@ -124,6 +130,41 @@ public class LDTParserRecordStream {
         }
 
         return stream;
+    }
+
+    // Assume S3 storage is set and all. We don't check that, you will get error if it is not
+    // Also assume, of course, all access is already set (secret key etc.)
+    public InputStream getStreamWithByteRangeOnS3(Blob blob, ByteRange range) throws IOException {
+
+        BlobManager blobManager = Framework.getService(BlobManager.class);
+        S3BlobProvider s3BlobProvider = (S3BlobProvider) blobManager.getBlobProvider(blob);
+        ManagedBlob managedBlob = (ManagedBlob) blob;
+        String key = managedBlob.getKey();
+
+        // TODO Make objectPrefix static and calculated only once
+        String bucket = Framework.getProperty("nuxeo.s3storage.bucket");
+        String bucketPrefix = Framework.getProperty("nuxeo.s3storage.bucket_prefix");
+        String objectPrefix = "s3://" + bucket + "/";
+        if (StringUtils.isNotBlank(bucketPrefix)) {
+            objectPrefix += bucketPrefix;
+        }
+        if (!objectPrefix.endsWith("/")) {
+            objectPrefix += "/";
+        }
+
+        String objectKey = objectPrefix + key;
+        // We do not handle versions.
+        GetObjectRequest getObjectRequest = new GetObjectRequest(bucket, objectKey);
+        getObjectRequest.setRange(range.getStart(), range.getEnd());
+        Blob tmpBlob = Blobs.createBlobWithExtension(".txt");
+        Download download = s3BlobProvider.getTransferManager().download(getObjectRequest, tmpBlob.getFile());
+        try {
+            download.waitForCompletion();
+            return tmpBlob.getStream();
+        } catch (AmazonClientException | InterruptedException e) {
+            throw new NuxeoException("Error downloading ByteRange(" + range.getStart() + ", " + range.getEnd()
+                    + ") for blob " + key + ", using " + objectKey, e);
+        }
     }
 
 }
