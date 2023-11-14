@@ -35,8 +35,11 @@ import org.nuxeo.ecm.core.blob.ManagedBlob;
 import org.nuxeo.runtime.api.Framework;
 
 import com.amazonaws.AmazonClientException;
+import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.GetObjectRequest;
+import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import com.amazonaws.services.s3.transfer.Download;
+import com.amazonaws.services.s3.transfer.TransferManager;
 
 /**
  * When reading a record inside an LDT File, we want to be able to get only the bytes we need.
@@ -63,6 +66,8 @@ import com.amazonaws.services.s3.transfer.Download;
  * don't, anyway, you will get an error.
  * This class also handles a warning when using S3BlobProvider with no byte range (it will still get the stream, but
  * downloads the whole file, which is not optimized)
+ * <br>
+ * Last IMPORTANT: as usual, do not forget to close the received inputStream.
  * 
  * @since 2021
  */
@@ -88,6 +93,13 @@ public class LDTParserRecordStream {
         return checkS3BlobProviderClass == 1;
     }
 
+    /**
+     * @param blob
+     * @param range
+     * @return
+     * @throws IOException
+     * @since TODO
+     */
     public static InputStream getStream(Blob blob, ByteRange range) throws IOException {
 
         InputStream stream = null;
@@ -132,38 +144,107 @@ public class LDTParserRecordStream {
         return stream;
     }
 
-    // Assume S3 storage is set and all. We don't check that, you will get error if it is not
-    // Also assume, of course, all access is already set (secret key etc.)
-    public InputStream getStreamWithByteRangeOnS3(Blob blob, ByteRange range) throws IOException {
+    /**
+     * Return directly a S3ObjectInputStream to the bytes. MUST BE CLOSED by caller "ASAP" (dixit Amazon doc)
+     * Once received, just byte[] bytes = stream.readAllBytes(); (if you know you don't
+     * have MBs, GBs of them)
+     * <br>
+     * WARNING
+     * Assume S3 storage is set and all. We don't check that, you will get error if it is not
+     * Also assume, of course, all access is already set (secret key etc.) in the configuration
+     * 
+     * @param blob
+     * @param range
+     * @return an input stream
+     * @throws IOException
+     * @since 2021
+     */
+    public static InputStream getStreamWithByteRangeOnS3(Blob blob, ByteRange range) throws IOException {
 
-        BlobManager blobManager = Framework.getService(BlobManager.class);
-        S3BlobProvider s3BlobProvider = (S3BlobProvider) blobManager.getBlobProvider(blob);
         ManagedBlob managedBlob = (ManagedBlob) blob;
         String key = managedBlob.getKey();
-
-        // TODO Make objectPrefix static and calculated only once
-        String bucket = Framework.getProperty("nuxeo.s3storage.bucket");
-        String bucketPrefix = Framework.getProperty("nuxeo.s3storage.bucket_prefix");
-        String objectPrefix = "s3://" + bucket + "/";
-        if (StringUtils.isNotBlank(bucketPrefix)) {
-            objectPrefix += bucketPrefix;
-        }
-        if (!objectPrefix.endsWith("/")) {
-            objectPrefix += "/";
+        
+        // We need to remove the provider prefix
+        if(key.startsWith(managedBlob.getProviderId() + ":")) {
+            key = key.replace(managedBlob.getProviderId() + ":", "");
         }
 
-        String objectKey = objectPrefix + key;
+        String objectKey = GetS3Config.getBucketPrefix() + key;        
+        
         // We do not handle versions.
-        GetObjectRequest getObjectRequest = new GetObjectRequest(bucket, objectKey);
+        GetObjectRequest getObjectRequest = new GetObjectRequest(GetS3Config.getBucket(), objectKey);
         getObjectRequest.setRange(range.getStart(), range.getEnd());
-        Blob tmpBlob = Blobs.createBlobWithExtension(".txt");
-        Download download = s3BlobProvider.getTransferManager().download(getObjectRequest, tmpBlob.getFile());
-        try {
-            download.waitForCompletion();
-            return tmpBlob.getStream();
-        } catch (AmazonClientException | InterruptedException e) {
-            throw new NuxeoException("Error downloading ByteRange(" + range.getStart() + ", " + range.getEnd()
-                    + ") for blob " + key + ", using " + objectKey, e);
+
+        AmazonS3 s3 = GetS3Config.getTransferManager(blob).getAmazonS3Client();
+
+        S3ObjectInputStream stream = s3.getObject(getObjectRequest).getObjectContent();
+        return stream;
+
+        /*
+         * Blob tmpBlob = Blobs.createBlobWithExtension(".txt");
+         * Download download = GetS3Config.getTransferManager().download(getObjectRequest, tmpBlob.getFile());
+         * try {
+         * download.waitForCompletion();
+         * return tmpBlob.getStream();
+         * } catch (AmazonClientException | InterruptedException e) {
+         * throw new NuxeoException("Error downloading ByteRange(" + range.getStart() + ", " + range.getEnd()
+         * + ") for blob " + key + ", using " + objectKey, e);
+         * }
+         */
+    }
+
+    /**
+     * Utility class to fetch misc.info only once.
+     * Not a killer optimization though, more a habit :-)
+     * <br>
+     * This utility, still, assumes the S3 Binary Storage is correctly configured.
+     * 
+     * @since 2021
+     */
+    protected static class GetS3Config {
+
+        protected static String bucket = null;
+
+        protected static String bucketPrefix = null;
+
+        protected static TransferManager transferManager = null;
+
+        public static String getBucket() {
+            if (bucket == null) {
+                bucket = Framework.getProperty("nuxeo.s3storage.bucket");
+                if(StringUtils.isBlank(bucket)) {
+                    bucket = Framework.getProperty("nuxeo.test.s3storage.provider.test.bucket");
+                }
+            }
+            return bucket;
+        }
+
+        public static String getBucketPrefix() {
+
+            if (bucketPrefix == null) {
+                bucketPrefix = Framework.getProperty("nuxeo.s3storage.bucket_prefix");
+                if (StringUtils.isBlank(bucketPrefix)) {
+                    bucketPrefix = Framework.getProperty("nuxeo.test.s3storage.provider.test.bucket_prefix");
+                }
+                if (StringUtils.isBlank(bucketPrefix)) {
+                    bucketPrefix = "";
+                }
+            }
+
+            return bucketPrefix;
+        }
+
+        public static TransferManager getTransferManager(Blob blob) {
+
+            if (transferManager == null) {
+                ManagedBlob managedBlob = (ManagedBlob) blob;
+
+                BlobManager blobManager = Framework.getService(BlobManager.class);
+                S3BlobProvider s3BlobProvider = (S3BlobProvider) blobManager.getBlobProvider(managedBlob.getProviderId());
+                transferManager = s3BlobProvider.getTransferManager();
+            }
+
+            return transferManager;
         }
     }
 

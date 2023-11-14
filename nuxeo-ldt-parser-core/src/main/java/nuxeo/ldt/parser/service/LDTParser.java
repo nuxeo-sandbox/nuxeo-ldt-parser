@@ -378,7 +378,7 @@ public class LDTParser {
         // ==================================================
         String recordStr = null;
         
-        ByteRange range = ByteRange.inclusive(startOffset, startOffset + recordSize);
+        ByteRange range = ByteRange.inclusive(startOffset, startOffset + recordSize -1);
         try (InputStream stream = LDTParserRecordStream.getStream(blob, range)) {
             byte[] recordBytes = stream.readNBytes((int) recordSize);
             recordStr = new String(recordBytes, StandardCharsets.UTF_8);
