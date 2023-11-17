@@ -50,6 +50,9 @@ public class LDTParseAndCreateDocumentsOp {
     
     @Param(name = "parserName", required = false, values = { "default" })
     protected String parserName = "default";
+    
+    @Param(name = "compressLdt", required = false, values = { "false" })
+    protected boolean compressLdt = false;
 
     @OperationMethod
     public DocumentModel run(DocumentModel doc) throws IOException {
@@ -67,7 +70,7 @@ public class LDTParseAndCreateDocumentsOp {
         
         LDTParser parser = ldtParserService.newParser(parserName);
         @SuppressWarnings("unused")
-        LDTInfo info = parser.parseAndCreateDocuments(doc);
+        LDTInfo info = parser.parseAndCreateDocuments(doc, compressLdt);
         
         return doc;
     }

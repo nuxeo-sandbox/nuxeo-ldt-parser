@@ -64,6 +64,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -256,6 +257,30 @@ public class LDTParser {
     }
 
     /**
+     * Check if a line is a header.
+     * 
+     * @param line
+     * @return
+     * @since 2021
+     */
+    public boolean isRecordHeader(String line) {
+
+        if (config.useCallbackForHeaders()) {
+            return getCallbacks().parseHeader(config, line, 0) == null;
+        }
+
+        for (LDTHeaderDescriptor header : config.getHeaders()) {
+            Matcher m = header.getCompiledPattern().matcher(line);
+            if (m.matches()) {
+                return true;
+            }
+        }
+
+        return false;
+
+    }
+
+    /**
      * Parses the line and returns an {@code Item} if the line is an Item (aka not a header).
      * If the configuration is set to use callbacks, the callback is used and in charge of
      * returning the {@code Item} or {@code null}
@@ -293,6 +318,13 @@ public class LDTParser {
 
         if (config.getDetailsLineMinSize() > 0 && line.length() < config.getDetailsLineMinSize()) {
             // System.out.println("LESS THAN MINIMAL LENGTH: " + line);
+            return null;
+        }
+
+        // When parseItem is called, headers have been parsed.
+        // But in multipage records, they are present in the "next" pages
+        // We should ignore them
+        if (isRecordHeader(line)) {
             return null;
         }
 
@@ -368,7 +400,7 @@ public class LDTParser {
     public Record getRecord(Blob blob, long startOffset, long recordSize) {
 
         // a recordsize of 1, or even 10 or 100 is likely an error, but we can't make 100% sure.
-        if (startOffset < 0 || recordSize < 1) {
+        if (startOffset < 0 || Math.abs(recordSize) < 1) {
             throw new NuxeoException(
                     "getRecord: Invalid startOffest (" + startOffset + ") or recordSize (" + recordSize + ")");
         }
@@ -377,12 +409,20 @@ public class LDTParser {
         // Get the String of the record
         // ==================================================
         String recordStr = null;
-        
-        ByteRange range = ByteRange.inclusive(startOffset, startOffset + recordSize -1);
+        boolean isCompressedLdt = false;
+        if (recordSize < 0) {
+            isCompressedLdt = true;
+            recordSize = Math.abs(recordSize);
+        }
+        ByteRange range = ByteRange.inclusive(startOffset, startOffset + recordSize - 1);
         try (InputStream stream = LDTParserRecordStream.getStream(blob, range)) {
             byte[] recordBytes = stream.readNBytes((int) recordSize);
-            recordStr = new String(recordBytes, StandardCharsets.UTF_8);
-        } catch(IOException e) {
+            if (isCompressedLdt) {
+                recordStr = CompressedLDT.uncompress(recordBytes);
+            } else {
+                recordStr = new String(recordBytes, StandardCharsets.UTF_8);
+            }
+        } catch (IOException e) {
             throw new NuxeoException("Error reading the blob with a ByteRange.", e);
         }
 
@@ -601,7 +641,7 @@ public class LDTParser {
      * @return the @{code LDTInfo}
      * @since 2021
      */
-    public LDTInfo parseAndCreateDocuments(DocumentModel inputLdtDoc) {
+    public LDTInfo parseAndCreateDocuments(DocumentModel inputLdtDoc, boolean compressLdt) {
 
         LDTInfo ldtInfo = null;
 
@@ -651,6 +691,7 @@ public class LDTParser {
             // log.warn("lengthOfEOF: " + lengthOfEOF);
             // log.warn("==============================");
 
+            CompressedLDT compressedLdt = null;
             while (it.hasNext()) {
 
                 // Get the whole record
@@ -659,6 +700,17 @@ public class LDTParser {
                 // If parsing whent wrong, the log has the info
                 if (record == null) {
                     continue;
+                }
+                ByteRange range;
+                if (compressLdt) {
+                    if (compressedLdt == null) {
+                        compressedLdt = new CompressedLDT(this, blob);
+                    }
+                    range = compressedLdt.add(record.startOffset, record.size);
+                    // Realign the values, make record sizen negative, as flag for "values for compressed file"
+                    // (we do it for recordSize, since sartoffset may be 0)
+                    record.startOffset = range.getStart();
+                    record.size = -range.getLength();
                 }
 
                 // log.warn(record.toString());
@@ -707,6 +759,11 @@ public class LDTParser {
 
             ldtInfo = new LDTInfo(countRecords);
             inputLdtDoc.setPropertyValue(Constants.XPATH_LDT_COUNTRECORDS, countRecords);
+
+            if (compressedLdt != null) {
+                Blob compressedLdtBlob = compressedLdt.close();
+                inputLdtDoc.setPropertyValue("file:content", (Serializable) compressedLdtBlob);
+            }
             inputLdtDoc = session.saveDocument(inputLdtDoc);
 
             session.save();
@@ -719,6 +776,18 @@ public class LDTParser {
 
         log.info("parseAndCreateStatementsWithRanges: Parsing done. " + ldtInfo.countRecords + " records created.");
         return ldtInfo;
+    }
+
+    /**
+     * By defalt, we do not compress the LDT file.
+     * See {@code parseAndCreateDocuments(DocumentModel inputLdtDoc, boolean compressLdt} for details
+     * 
+     * @param inputLdtDoc
+     * @return
+     * @since 2021
+     */
+    public LDTInfo parseAndCreateDocuments(DocumentModel inputLdtDoc) {
+        return parseAndCreateDocuments(inputLdtDoc, false);
     }
 
     /**
