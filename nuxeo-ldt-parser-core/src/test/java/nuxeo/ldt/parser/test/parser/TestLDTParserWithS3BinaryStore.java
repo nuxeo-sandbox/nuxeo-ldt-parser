@@ -35,12 +35,14 @@ import org.nuxeo.runtime.test.runner.TransactionalFeature;
 
 import com.amazonaws.services.s3.model.S3ObjectInputStream;
 
+import nuxeo.ldt.parser.service.CompressedLDT;
 import nuxeo.ldt.parser.service.LDTParser;
 import nuxeo.ldt.parser.service.LDTParserService;
 import nuxeo.ldt.parser.service.elements.Record;
 import nuxeo.ldt.parser.service.utils.LDTParserRecordStream;
 import nuxeo.ldt.parser.test.SimpleFeatureCustom;
 import nuxeo.ldt.parser.test.TestUtils;
+import nuxeo.ldt.parser.test.automation.TestCompressedLDT;
 
 /**
  * The following environment variables *must* have been set prior to the unit tests:
@@ -92,20 +94,27 @@ public class TestLDTParserWithS3BinaryStore {
     protected LDTParserService ldtParserService;
 
     @Test
+    public void testProviderShouldBeDeployed() {
+
+        // Check things are correctly deployed
+        BlobProvider provider = blobManager.getBlobProvider(TEST_BLOB_PROVIDER_ID);
+        assertTrue(provider instanceof S3BlobProvider);
+        assertTrue(provider.allowByteRange());
+    }
+
+    @Test
     public void shouldGetRecordFromS3WithByteRange() throws Exception {
 
         Assume.assumeTrue("At least one AWS BlobStore configuration key is missing. Not doing the test",
                 SimpleFeatureCustom.hasAllKeys());
+
+        testProviderShouldBeDeployed();
 
         DocumentModel doc = session.createDocumentModel("/", "test-doc", "File");
         doc.setPropertyValue("dc:title", "test-doc");
         Blob blob = TestUtils.getSimpleTestFileBlob();
         doc.setPropertyValue("file:content", (Serializable) blob);
         doc = session.createDocument(doc);
-
-        BlobProvider provider = blobManager.getBlobProvider(TEST_BLOB_PROVIDER_ID);
-        // provider.allowByteRange();
-        assertTrue(provider instanceof S3BlobProvider);
 
         transactionalFeature.nextTransaction();
 
@@ -117,8 +126,10 @@ public class TestLDTParserWithS3BinaryStore {
 
         LDTParser parser = ldtParserService.newParser(null);
         // Actually, we have no way to make sure the record was downloaded by byterange...
-        // It's when debugging, setting a breakpoint, following the code that we can make
-        // sure it does.
+        // You can (and we did):
+        // * Debugging, breakpoint, follow the code => it does get the range from S3
+        // * Set log level to DEBUG for org.nuxeo.ecm.blob.s3.S3BlobStore and look at it
+        // See S3BlobStore#readBlob(String key, Path dest)
         Record record = parser.getRecord(resultBlob, TestUtils.SIMPLELDT_RECORD2_STARTOFFSET,
                 TestUtils.SIMPLELDT_RECORD2_RECORDSIZE);
         assertNotNull(record);
@@ -132,15 +143,13 @@ public class TestLDTParserWithS3BinaryStore {
         Assume.assumeTrue("At least one AWS BlobStore configuration key is missing. Not doing the test",
                 SimpleFeatureCustom.hasAllKeys());
 
+        testProviderShouldBeDeployed();
+
         DocumentModel doc = session.createDocumentModel("/", "test-doc", "File");
         doc.setPropertyValue("dc:title", "test-doc");
         Blob blob = TestUtils.getSimpleTestFileBlob();
         doc.setPropertyValue("file:content", (Serializable) blob);
         doc = session.createDocument(doc);
-
-        BlobProvider provider = blobManager.getBlobProvider(TEST_BLOB_PROVIDER_ID);
-        // provider.allowByteRange();
-        assertTrue(provider instanceof S3BlobProvider);
 
         transactionalFeature.nextTransaction();
 
@@ -151,31 +160,68 @@ public class TestLDTParserWithS3BinaryStore {
         S3ObjectInputStream stream = null;
         stream = (S3ObjectInputStream) LDTParserRecordStream.getStreamWithByteRangeOnS3(resultBlob, range);
         assertNotNull(stream);
-        
+
         byte[] bytes = stream.readAllBytes();
         stream.abort();
         stream = null;
-        
+
         String str = new String(bytes, StandardCharsets.UTF_8);
         String[] linesArray = str.split("\\r?\\n");
         List<String> linesList = new ArrayList<>(Arrays.asList(linesArray));
-        
+
         LDTParser parser = ldtParserService.newParser(null);
         Record record = parser.parseRecord(linesList);
         assertNotNull(record);
         TestUtils.checkSimpleTestFileRecord2Values(record);
-        
-        
-        /*
-        try (stream = (S3ObjectInputStream) LDTParserRecordStream.getStreamWithByteRangeOnS3(
-                resultBlob, range)) {
 
-        } finally {
-            if(stream != null) {
-                stream.abort();
-            }
-        }
-        assertNotNull(stream);*/
+        /*
+         * try (stream = (S3ObjectInputStream) LDTParserRecordStream.getStreamWithByteRangeOnS3(
+         * resultBlob, range)) {
+         * } finally {
+         * if(stream != null) {
+         * stream.abort();
+         * }
+         * }
+         * assertNotNull(stream);
+         */
+
+    }
+
+    @Test
+    public void shouldGetCompressedRecordFromS3WithByteRange() throws Exception {
+
+        Assume.assumeTrue("At least one AWS BlobStore configuration key is missing. Not doing the test",
+                SimpleFeatureCustom.hasAllKeys());
+
+        testProviderShouldBeDeployed();
+
+        DocumentModel doc = session.createDocumentModel("/", "test-doc", "File");
+        doc.setPropertyValue("dc:title", "test-doc");
+        File testFile = FileUtils.getResourceFileFromContext(TestCompressedLDT.COMPRESSED_BIGGER_LDT);
+        assertNotNull(testFile);
+        Blob blob = new FileBlob(testFile);
+        blob.setMimeType(CompressedLDT.COMPRESSED_LDT_MIMETYPE);
+        doc.setPropertyValue("file:content", (Serializable) blob);
+        doc = session.createDocument(doc);
+
+        transactionalFeature.nextTransaction();
+
+        ManagedBlob resultBlob = (ManagedBlob) doc.getPropertyValue("file:content");
+        String digest = resultBlob.getDigest(); // digest is the key
+
+        assertEquals(TEST_BLOB_PROVIDER_ID, resultBlob.getProviderId());
+        assertEquals(TEST_BLOB_PROVIDER_ID + ':' + digest, resultBlob.getKey());
+
+        LDTParser parser = ldtParserService.newParser(null);
+        // Actually, we have no way to make sure the record was downloaded by byterange...
+        // You can (and we did):
+        // * Debugging, breakpoint, follow the code => it does get the range from S3
+        // * Set log level to DEBUG for org.nuxeo.ecm.blob.s3.S3BlobStore and look at it
+        // See S3BlobStore#readBlob(String key, Path dest)
+        Record record = parser.getRecord(resultBlob, TestCompressedLDT.COMPRESSED_START_RECORD,
+                TestCompressedLDT.COMPRESSED_RECORD_SIZE);
+        assertNotNull(record);
+        TestUtils.checkSimpleTestFileRecord2Values(record);
 
     }
 

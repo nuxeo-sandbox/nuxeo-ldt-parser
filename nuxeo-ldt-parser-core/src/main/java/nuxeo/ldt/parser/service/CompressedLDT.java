@@ -24,34 +24,35 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.nuxeo.ecm.core.api.Blob;
 import org.nuxeo.ecm.core.api.Blobs;
 import org.nuxeo.ecm.core.api.CloseableFile;
 import org.nuxeo.ecm.core.api.NuxeoException;
 import org.nuxeo.ecm.core.blob.ByteRange;
 
-import nuxeo.ldt.parser.service.elements.Record;
-
 /**
  * @since TODO
  */
 public class CompressedLDT {
+    
+    public static final String COMPRESSED_LDT_MIMETYPE = "application/cldt";
+    
+    public static final String COMPRESSED_LDT_FILEXTENSTION = "cldt";
 
     protected LDTParser ldtParser;
 
-    protected Blob sourceLdt;
+    protected Blob ldtBlob;
 
     protected CloseableFile ldtFile;
 
     protected RandomAccessFile ldtRandomAccessFile;
 
-    protected Blob destination;
+    protected Blob destinationBlob;
 
     protected RandomAccessFile destinaTionRandomAccessFile;
 
@@ -60,9 +61,9 @@ public class CompressedLDT {
     public CompressedLDT(LDTParser parser, Blob sourceLdtBlob) throws IOException {
 
         this.ldtParser = parser;
-        this.sourceLdt = sourceLdtBlob;
+        this.ldtBlob = sourceLdtBlob;
 
-        ldtFile = sourceLdt.getCloseableFile();
+        ldtFile = ldtBlob.getCloseableFile();
         ldtRandomAccessFile = new RandomAccessFile(ldtFile.file, "r");
 
     }
@@ -70,9 +71,8 @@ public class CompressedLDT {
     public ByteRange add(long startOffsetInLDT, long recordSizeInLDT) throws IOException {
 
         if (destinaTionRandomAccessFile == null) {
-            destination = Blobs.createBlobWithExtension(".cldt");
-            destination.setMimeType("application/binary");
-            destinaTionRandomAccessFile = new RandomAccessFile(destination.getFile(), "rw");
+            destinationBlob = Blobs.createBlobWithExtension("." + COMPRESSED_LDT_FILEXTENSTION);
+            destinaTionRandomAccessFile = new RandomAccessFile(destinationBlob.getFile(), "rw");
         }
         // 1. Read the text
         byte[] bytes = new byte[(int) recordSizeInLDT];
@@ -118,7 +118,15 @@ public class CompressedLDT {
         ldtFile.close();
 
         destinaTionRandomAccessFile.close();
-        return destination;
+        
+        String name = ldtBlob.getFilename();
+        if(StringUtils.isNotBlank(name)) {
+            name = FilenameUtils.getBaseName(name) + "." + COMPRESSED_LDT_FILEXTENSTION;
+            destinationBlob.setFilename(name);
+        }
+        destinationBlob.setMimeType(COMPRESSED_LDT_MIMETYPE);
+        
+        return destinationBlob;
     }
 
     public static String uncompress(byte[] compressedBytes) {
