@@ -40,26 +40,18 @@ import org.apache.logging.log4j.Logger;
 import org.nuxeo.ecm.automation.AutomationService;
 import org.nuxeo.ecm.automation.OperationContext;
 import org.nuxeo.ecm.automation.OperationException;
-import org.nuxeo.ecm.blob.s3.S3BlobProvider;
-import org.nuxeo.ecm.blob.s3.S3BlobStore;
 import org.nuxeo.ecm.core.api.Blob;
-import org.nuxeo.ecm.core.api.Blobs;
 import org.nuxeo.ecm.core.api.CloseableFile;
 import org.nuxeo.ecm.core.api.CoreSession;
 import org.nuxeo.ecm.core.api.DocumentModel;
 import org.nuxeo.ecm.core.api.NuxeoException;
 import org.nuxeo.ecm.core.api.impl.blob.JSONBlob;
-import org.nuxeo.ecm.core.blob.AbstractBlobStore;
-import org.nuxeo.ecm.core.blob.BlobManager;
-import org.nuxeo.ecm.core.blob.BlobProvider;
 import org.nuxeo.ecm.core.blob.ByteRange;
-import org.nuxeo.ecm.core.blob.ManagedBlob;
 import org.nuxeo.runtime.api.Framework;
 import org.nuxeo.runtime.transaction.TransactionHelper;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -67,7 +59,6 @@ import java.io.InputStreamReader;
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -84,7 +75,8 @@ import java.util.stream.Collectors;
  * <br>
  * It also can create one document/record {@code LDTParser#parseAndCreateDocuments} saving its start offset and record
  * size for quick retrieval. The retrieval is very fast because we just get the bytes of the record inside the LDT file,
- * even if it is stored on S3.
+ * even if it is stored on S3.<br />
+ * Also, when parseing and creating the data, it is possible to compress the ldt file (it is text, gain is ~70%)
  * <br>
  * The behavior is based on the configuration. We provide a "default" configuration that must be used as an example,
  * since it contains, by essence, each ldt files will be different for each user of the plugin.
@@ -704,10 +696,10 @@ public class LDTParser {
                 ByteRange range;
                 if (compressLdt) {
                     if (compressedLdt == null) {
-                        compressedLdt = new CompressedLDT(this, blob);
+                        compressedLdt = new CompressedLDT(blob);
                     }
                     range = compressedLdt.add(record.startOffset, record.size);
-                    // Realign the values, make record sizen negative, as flag for "values for compressed file"
+                    // Realign the values, make record size negative, as flag for "values for compressed file"
                     // (we do it for recordSize, since sartoffset may be 0)
                     record.startOffset = range.getStart();
                     record.size = -range.getLength();
@@ -779,7 +771,7 @@ public class LDTParser {
     }
 
     /**
-     * By defalt, we do not compress the LDT file.
+     * By default, we do not compress the LDT file.
      * See {@code parseAndCreateDocuments(DocumentModel inputLdtDoc, boolean compressLdt} for details
      * 
      * @param inputLdtDoc

@@ -32,19 +32,35 @@ import org.apache.commons.lang3.StringUtils;
 import org.nuxeo.ecm.core.api.Blob;
 import org.nuxeo.ecm.core.api.Blobs;
 import org.nuxeo.ecm.core.api.CloseableFile;
-import org.nuxeo.ecm.core.api.NuxeoException;
 import org.nuxeo.ecm.core.blob.ByteRange;
 
 /**
- * @since TODO
+ * Allows for compressing a .LDT file. The principle is to parse a LDT file and generate the compressed one on the fly.
+ * The format is simple: Each record is compressed (GZIP) and added to the compressed file, one after the other.
+ * Caller is in charge of keepin track of the startOffset and recordSize inside the compressed ldt.
+ * The file extension is .cldt, the mimetype is application/cldt.
+ * <br />
+ * Usage:
+ * <ol>
+ * <li>Create a new {@code CompressedLDT}, with a {@code LDTParser} and the blob holding the source LDT</li>
+ * <li>Iterate/parse the LDT and for each record found, call {@code add(startOffset, recordSize} (both parameters are
+ * related to the source LDT)</li>
+ * <li><b>Important</b>: Once done, do not forget to {@code close()} the CompressedLDT object, so he misc. internal
+ * streams and files are correctly closed</li>
+ * </ol>
+ * See {@code LDTParser#parseAndCreateDocuments(DocumentModel, boolean)} for an example of use.
+ * <br />
+ * All methods can throw an {@code IOException}
+ * <br />
+ * To extract a record from the compressed LDT, use the static {@code CompressedLDT#uncompress} method.
+ * 
+ * @since 2021
  */
 public class CompressedLDT {
-    
-    public static final String COMPRESSED_LDT_MIMETYPE = "application/cldt";
-    
-    public static final String COMPRESSED_LDT_FILEXTENSTION = "cldt";
 
-    protected LDTParser ldtParser;
+    public static final String COMPRESSED_LDT_MIMETYPE = "application/cldt";
+
+    public static final String COMPRESSED_LDT_FILEXTENSTION = "cldt";
 
     protected Blob ldtBlob;
 
@@ -58,9 +74,14 @@ public class CompressedLDT {
 
     protected long nextStartOffset = 0;
 
-    public CompressedLDT(LDTParser parser, Blob sourceLdtBlob) throws IOException {
+    /**
+     * Prepare the object to use the LDT for future calls
+     * 
+     * @param sourceLdtBlob
+     * @throws IOException
+     */
+    public CompressedLDT(Blob sourceLdtBlob) throws IOException {
 
-        this.ldtParser = parser;
         this.ldtBlob = sourceLdtBlob;
 
         ldtFile = ldtBlob.getCloseableFile();
@@ -68,6 +89,15 @@ public class CompressedLDT {
 
     }
 
+    /**
+     * Read the record inside the source LDT, get all its bytes, compresses them and adds the result to the .cldt.
+     * Return the byte range inside the compressed ldt.
+     * 
+     * @param startOffsetInLDT
+     * @param recordSizeInLDT
+     * @return the byte range inside the compressed ldt.
+     * @throws IOException
+     */
     public ByteRange add(long startOffsetInLDT, long recordSizeInLDT) throws IOException {
 
         if (destinaTionRandomAccessFile == null) {
@@ -78,23 +108,7 @@ public class CompressedLDT {
         byte[] bytes = new byte[(int) recordSizeInLDT];
         ldtRandomAccessFile.read(bytes);
 
-        // 2. Get the JSON
-        /*
-        String str = new String(bytes, StandardCharsets.UTF_8);
-        String[] linesArray = str.split("\\r?\\n");
-        List<String> linesList = new ArrayList<>(Arrays.asList(linesArray));
-        Record record = ldtParser.parseRecord(linesList);
-        String recordJsonStr = record.toJson();
-
-        // 3. Compress
-        byte[] jsonBytes = recordJsonStr.getBytes(StandardCharsets.UTF_8);
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        try (GZIPOutputStream gzipOutputStream = new GZIPOutputStream(byteArrayOutputStream)) {
-            // Write the string's bytes to the gzip output stream
-            gzipOutputStream.write(jsonBytes);
-        }
-        byte[] compressedData = byteArrayOutputStream.toByteArray();
-        */
+        // 2. Compress
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         try (GZIPOutputStream gzipOutputStream = new GZIPOutputStream(byteArrayOutputStream)) {
             // Write the string's bytes to the gzip output stream
@@ -102,8 +116,7 @@ public class CompressedLDT {
         }
         byte[] compressedData = byteArrayOutputStream.toByteArray();
 
-
-        // 4. add to file
+        // 3. add to file
         destinaTionRandomAccessFile.write(compressedData);
 
         ByteRange range = ByteRange.inclusive(nextStartOffset, nextStartOffset + compressedData.length - 1);
@@ -112,24 +125,38 @@ public class CompressedLDT {
         return range;
     }
 
+    /**
+     * To be called once parsing the source ldt is done.
+     * Closes all the internbal objects (streams/files) and returns the blob of the compressed ldt.
+     * 
+     * @return the blob of the compressed ldt
+     * @throws IOException
+
+     */
     public Blob close() throws IOException {
 
         ldtRandomAccessFile.close();
         ldtFile.close();
 
         destinaTionRandomAccessFile.close();
-        
+
         String name = ldtBlob.getFilename();
-        if(StringUtils.isNotBlank(name)) {
+        if (StringUtils.isNotBlank(name)) {
             name = FilenameUtils.getBaseName(name) + "." + COMPRESSED_LDT_FILEXTENSTION;
             destinationBlob.setFilename(name);
         }
         destinationBlob.setMimeType(COMPRESSED_LDT_MIMETYPE);
-        
+
         return destinationBlob;
     }
 
-    public static String uncompress(byte[] compressedBytes) {
+    /**
+     * get all the compressed bytes of a record, uncompress them, return the corresponding text.
+     * 
+     * @param compressedBytes
+     * @return the whole text of the record
+     */
+    public static String uncompress(byte[] compressedBytes) throws IOException {
 
         String decompressedString = null;
 
@@ -148,7 +175,7 @@ public class CompressedLDT {
             decompressedString = stringBuilder.toString();
 
         } catch (IOException e) {
-            throw new NuxeoException("Error while expanding the copressed string", e);
+            throw new IOException("Error while expanding the compressed string", e);
         }
 
         return decompressedString;

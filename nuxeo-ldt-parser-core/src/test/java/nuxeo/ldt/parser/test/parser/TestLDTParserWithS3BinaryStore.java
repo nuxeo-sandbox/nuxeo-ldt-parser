@@ -42,7 +42,7 @@ import nuxeo.ldt.parser.service.elements.Record;
 import nuxeo.ldt.parser.service.utils.LDTParserRecordStream;
 import nuxeo.ldt.parser.test.SimpleFeatureCustom;
 import nuxeo.ldt.parser.test.TestUtils;
-import nuxeo.ldt.parser.test.automation.TestCompressedLDT;
+import nuxeo.ldt.parser.test.compression.TestCompressedLDT;
 
 /**
  * The following environment variables *must* have been set prior to the unit tests:

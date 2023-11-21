@@ -16,7 +16,7 @@
  * Contributors:
  *     Thibaud Arguillere
  */
-package nuxeo.ldt.parser.test.automation;
+package nuxeo.ldt.parser.test.compression;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -35,7 +35,6 @@ import org.nuxeo.ecm.automation.OperationContext;
 import org.nuxeo.ecm.core.api.Blob;
 import org.nuxeo.ecm.core.api.CoreSession;
 import org.nuxeo.ecm.core.api.DocumentModel;
-import org.nuxeo.ecm.core.api.DocumentModelList;
 import org.nuxeo.ecm.core.api.impl.blob.FileBlob;
 import org.nuxeo.ecm.core.test.DefaultRepositoryInit;
 import org.nuxeo.ecm.core.test.annotations.Granularity;
@@ -149,7 +148,7 @@ public class TestCompressedLDT {
                 nuxeo.ldt.parser.service.Constants.XPATH_LDT_COUNTRECORDS);
         assertEquals(BIGGER_LDT_COUNT_RECORDS, countStatements);
 
-        // Check the file was compressed compressed
+        // Check the file was compressed
         File testFile = FileUtils.getResourceFileFromContext(BIGGER_LDT);
         assertNotNull(testFile);
         Blob blob = new FileBlob(testFile);
