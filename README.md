@@ -1,7 +1,7 @@
 # nuxeo-ldt-parser
 
 > [!NOTE]
-> This README is **W**ork **I**n **P**rogress. Most is described and explained, some parts are missing (i.e. using page range to extract ony some pages of a multi-pages LDT record)
+> This README is **W**ork **I**n **P**rogress. Most is described and explained, some parts are missing (i.e. using page range to extract ony some pages of a multi-pages LDT record, using a compressed LDT file)
 
 nuxeo-ldt-parser provides a **configurable service for parsing LDT files**.
 
@@ -22,6 +22,8 @@ So, still with the bank statement example, we would store only some bytes for re
 ### Parse the File, extract _Records_, with _header(s)_ and _items_
 
 The plugin parses an LDT file and extracts _records_ based on configuration. _Records_ can be saved as Nuxeo `Documents`, with utility fields required for a fast retrieval (see below) plus any custom field you need (if the ldt holds bank statements, you would store client name, amounts, dates, …).
+
+Optionaly, it can compress the source LDT file. As it is text file, compression rate can be around 70-80%. When a ldt is compressed, the retrieval uses the same mechanism (it gets the compressed bytes from technical fields).
 
 #### The plugin parses the file line by line. For each _record_, It expects:
 
@@ -71,6 +73,7 @@ The `ldtrecord` schema stores:
 
 * The ID of the related Nuxeo document storing the LDT file
 * The start offset and record size (in bytes) of the _record_ inside the ldt file.
+* if the ldt file was compressed, the record size is negative, this is how the plugin knows it has to expand the bytes once retrieved.
 
 So, when a _record_ needs to be fetched from the document, we just get the required bytes in the original ldt file, no need to re-parse the whole file to find a record. Notice this also works if you store your binaries in S3 using nuxeo-s3-binary-storage (see below, "S3 BlobProvider Configuration").
 
@@ -311,6 +314,11 @@ Automation Operations are:
   * This document _must have_ the `ldt` schema.
 * Parameter:
   * `parserName`, string. Must be the name of an "ldtParser" contribution. If not passed or empty, the operation uses the `"default"` configuration
+  * `compressLdt`, boolean, optional (`false` by default).
+  
+  > [!IMPORTANT]
+  > If `true`, the blob of the input document is *replaced* with a compressed LDT (extension `.cldt`,  mime-type "application/cldt"), and all the `recordSize` are negative (this is a flog when retrieving a record)
+
 * Output:
   * The input `Document` with its `ldt` schema updated.
   * For now, this schema ha sa single field, `ldt:countRecords`.
@@ -320,20 +328,23 @@ Automation Operations are:
 #### `Services.GetLDTJsonRecord`
 (See below for details on input and parameters)
 * Input:
-  * optional.
+  * `document`, optional.
 * Parameters:
   * `parserName`, string, optional. Must be the name of an "ldtParser" contribution. If not passed or empty, the operation uses the `"default"` configuration
-  * `startOffset`, long, optional . 
-  * `recordSize`, long, optional. 
-  * `firstPage`, long, optional. 
-  * `lastPage`, long, optional. 
+  * `sourceLdtDocId`, String, optional
+  * `startOffset`, long, optional
+  * `recordSize`, long, optional 
+  * `firstPage`, long, optional 
+  * `lastPage`, long, optional 
 * Output:
   * A JSON `Blob` containing the record
   * Fields of the JSON are defined in the XML configuration, using `recordJsonTemplate` (see above).
 
- Input is a document (optional). If passed, it must have the ldtrecord schema, the related LDT document must exist, and current user must have read permission on it. Also, if Input is passed, `sourceLdtDocId`/`startOffset`/`recordSize` are ignored (the operation reads the values from the `ldtrecord` schema).
+ Input is a document (optional). If passed, it must have the `ldtrecord` schema, the related LDT document must exist, and current user must have read permission on it. Also, if Input is passed, `sourceLdtDocId`/`startOffset`/`recordSize` are ignored (the operation reads the values from the `ldtrecord` schema).
 
  If input is not passed, then `sourceLdtDocId`/`startOffset`/`recordSize` are required.
+
+ Whatever the input, it is possible to get only some pages from the record. This happens typically when you know it can be big, contains dozens and dozens of pages and retrieving it could lead to timeout or OutOfMemory (ht JSON is always built in memory)
 
 
 ## Callbacks

@@ -133,7 +133,6 @@ public class TestCompressedLDT {
           msg += "===========================================================================\n";
           System.out.println(msg);
          */
-
         return docResult;
 
     }

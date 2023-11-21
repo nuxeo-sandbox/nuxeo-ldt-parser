@@ -33,6 +33,7 @@ import org.nuxeo.ecm.core.api.Blob;
 import org.nuxeo.ecm.core.api.Blobs;
 import org.nuxeo.ecm.core.api.CloseableFile;
 import org.nuxeo.ecm.core.blob.ByteRange;
+import org.nuxeo.runtime.api.Framework;
 
 /**
  * Allows for compressing a .LDT file. The principle is to parse a LDT file and generate the compressed one on the fly.
@@ -53,10 +54,18 @@ import org.nuxeo.ecm.core.blob.ByteRange;
  * All methods can throw an {@code IOException}
  * <br />
  * To extract a record from the compressed LDT, use the static {@code CompressedLDT#uncompress} method.
+ * The optional {@code ldt.parser.uncompress.buffer} configuration parameter can be used to set the expand buffer, in bytes.
+ * Default and minimum is 4096
  * 
  * @since 2021
  */
 public class CompressedLDT {
+
+    protected static int expandBuffer = 0;
+
+    public static int MINIMUM_EXPAND_BUFFER = 4096;
+
+    public static final String EXPAND_BUFFER_CONFIGURATION_PARAM = "ldt.parser.uncompress.buffer";
 
     public static final String COMPRESSED_LDT_MIMETYPE = "application/cldt";
 
@@ -86,6 +95,24 @@ public class CompressedLDT {
 
         ldtFile = ldtBlob.getCloseableFile();
         ldtRandomAccessFile = new RandomAccessFile(ldtFile.file, "r");
+
+        if (expandBuffer == 0) {
+            expandBuffer = MINIMUM_EXPAND_BUFFER;
+
+            String expandBufferStr = Framework.getProperty(EXPAND_BUFFER_CONFIGURATION_PARAM);
+            if (StringUtils.isNoneBlank(expandBufferStr)) {
+                try {
+                    int value = Integer.parseInt(expandBufferStr);
+                    expandBuffer = value;
+                } catch (NumberFormatException e) {
+                    expandBuffer = MINIMUM_EXPAND_BUFFER;
+                }
+            }
+
+            if (expandBuffer < MINIMUM_EXPAND_BUFFER) {
+                expandBuffer = MINIMUM_EXPAND_BUFFER;
+            }
+        }
 
     }
 
@@ -131,7 +158,6 @@ public class CompressedLDT {
      * 
      * @return the blob of the compressed ldt
      * @throws IOException
-
      */
     public Blob close() throws IOException {
 
@@ -151,12 +177,12 @@ public class CompressedLDT {
     }
 
     /**
-     * get all the compressed bytes of a record, uncompress them, return the corresponding text.
+     * Get all the compressed bytes of a record, uncompress them, return the corresponding text.
      * 
      * @param compressedBytes
      * @return the whole text of the record
      */
-    public static String uncompress(byte[] compressedBytes) throws IOException {
+    public static String expand(byte[] compressedBytes) throws IOException {
 
         String decompressedString = null;
 
@@ -165,13 +191,12 @@ public class CompressedLDT {
                 InputStreamReader inputStreamReader = new InputStreamReader(gzipInputStream, StandardCharsets.UTF_8)) {
 
             StringBuilder stringBuilder = new StringBuilder();
-            char[] buffer = new char[4096];
+            char[] buffer = new char[expandBuffer];
             int bytesRead;
             while ((bytesRead = inputStreamReader.read(buffer)) != -1) {
                 stringBuilder.append(buffer, 0, bytesRead);
             }
 
-            // Decompressed string
             decompressedString = stringBuilder.toString();
 
         } catch (IOException e) {

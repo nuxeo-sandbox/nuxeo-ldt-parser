@@ -410,7 +410,7 @@ public class LDTParser {
         try (InputStream stream = LDTParserRecordStream.getStream(blob, range)) {
             byte[] recordBytes = stream.readNBytes((int) recordSize);
             if (isCompressedLdt) {
-                recordStr = CompressedLDT.uncompress(recordBytes);
+                recordStr = CompressedLDT.expand(recordBytes);
             } else {
                 recordStr = new String(recordBytes, StandardCharsets.UTF_8);
             }
