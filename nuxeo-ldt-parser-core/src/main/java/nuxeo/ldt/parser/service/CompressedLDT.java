@@ -43,7 +43,7 @@ import org.nuxeo.runtime.api.Framework;
  * <br />
  * Usage:
  * <ol>
- * <li>Create a new {@code CompressedLDT}, with a {@code LDTParser} and the blob holding the source LDT</li>
+ * <li>Create a new {@code CompressedLDT}, with the blob holding the source LDT</li>
  * <li>Iterate/parse the LDT and for each record found, call {@code add(startOffset, recordSize} (both parameters are
  * related to the source LDT)</li>
  * <li><b>Important</b>: Once done, do not forget to {@code close()} the CompressedLDT object, so he misc. internal

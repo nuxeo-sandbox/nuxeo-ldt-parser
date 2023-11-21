@@ -72,6 +72,8 @@ public class LDTParseAndCreateDocumentsOp {
         @SuppressWarnings("unused")
         LDTInfo info = parser.parseAndCreateDocuments(doc, compressLdt);
         
+        doc = session.getDocument(doc.getRef());
+        
         return doc;
     }
 
