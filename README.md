@@ -5,7 +5,7 @@
 
 nuxeo-ldt-parser provides a **configurable service for parsing LDT files**.
 
-LDT files usually contain a lot of data, several thousands, sometimes hundreds of thousands, and this makes billions after a while (example: LDT file holding bank statements for all the customers).
+LDT files usually contain a lot of text data, several thousands, sometimes hundreds of thousands, and this makes billions after a while (example: LDT file holding bank statements for all the customers).
 
 The parser aims to store only retrieval information and optional custom fields:
 
@@ -31,6 +31,7 @@ Optionaly, it can compress the source LDT file. As it is text file, compression 
 * And 2 kinds of lines: A line is either a _header_ or an _item_
 
 So, typically:
+
 ```
 Header line with the startRecordToken
 0 or more header(s)
@@ -50,7 +51,7 @@ Header line with the startRecordToken
 Lines with items, last one contains the endRecordToken
 ```
 
-If you want to handle multi-pages _records_, do not forget to the the `endofPage` property for the item(s) in the XML configuration . See the example in ldtparser-service.xml, where the "IntermediateBalance" and the "ClosingBalance" items define `<endOfPage>true</endOfPage>`.
+If you want to handle multi-pages _records_, do not forget to the `endofPage` property for the item(s) in the XML configuration . See the example in ldtparser-service.xml, where the "IntermediateBalance" and the "ClosingBalance" items define `<endOfPage>true</endOfPage>`.
 
 #### Headers and Items:
 * A _header_ usually defines fields/values shared by the _record_. In a bank statement example, it will be the date of the statement, the client Id, the bank account, etc.
@@ -63,7 +64,7 @@ If you want to handle multi-pages _records_, do not forget to the the `endofPage
 
 
 ### Rendering a _Record_
-To render a record, you will first get its JSON and then render it as you need. In the unit tests, we provide rendering examples: render to html (using freemarker for templating), render to pdf (which actually is a rendering to html then a conversion to pdf)
+To render a record, you will first get its JSON and then render it as you need. In the unit tests, we provide rendering examples: Render to html (using freemarker for templating), render to pdf (which actually is a rendering to html then a conversion to pdf)
 
 
 ### Retrieving a _Record_ inside the LDT File
@@ -72,10 +73,10 @@ The plugin provides the `LDTRecord` facet that comes with the `ldtrecord` schema
 The `ldtrecord` schema stores:
 
 * The ID of the related Nuxeo document storing the LDT file
-* The start offset and record size (in bytes) of the _record_ inside the ldt file.
-* if the ldt file was compressed, the record size is negative, this is how the plugin knows it has to expand the bytes once retrieved.
+* If the LDT is not compressed: The start offset and record size (in bytes) of the _record_ inside the ldt file.
+* If the ldt file was compressed (and is a .cldt file), the record size is negative, this is how the plugin knows it has to expand the bytes once retrieved.
 
-So, when a _record_ needs to be fetched from the document, we just get the required bytes in the original ldt file, no need to re-parse the whole file to find a record. Notice this also works if you store your binaries in S3 using nuxeo-s3-binary-storage (see below, "S3 BlobProvider Configuration").
+So, when a _record_ needs to be fetched from the document, we just get the required bytes in the original ldt/cldt file, no need to re-parse the whole file to find a record. Notice this also works if you store your binaries in S3 using nuxeo-s3-binary-storage (see below, "S3 BlobProvider Configuration"). And this is fundamental: We don't want to download locally a 500MB ldt file from s3 to parse it and extract 1kb of text data, this would not scale and would cost more.
 
 
 ### Configuration
@@ -480,7 +481,7 @@ For items, using a table:
 </table>
 ```
 
-* Friom Studio, as `Services.GetLDTJsonRecord` returns a String, converted to JSON and `freemarker` expects more Java objects, you may need to "massage" a bit the values. Again, see the unit test for an example (automation-render-pdf-with-any2pdf.xml). Something like:
+* From Studio, as `Services.GetLDTJsonRecord` returns a String, converted to JSON and `freemarker` expects more Java objects, you may need to "massage" a bit the values. Again, see the unit test for an example (automation-render-pdf-with-any2pdf.xml). Something like:
 
 ```
 function run(input, params) {
@@ -535,7 +536,7 @@ function run(input, params) {
 
 Retrieval is Super Fast also when Using S3.
 
-As explained above (_Retrieving a Record inside the LDT File_), the plugin, when parsing an ldt file, creates documents and store retrieval information in the `ldtrecord`. This way, when a single record is requested, the plugin just gets the bytes without parsing the file.
+As explained above (_Retrieving a Record inside the LDT File_), the plugin, when parsing an ldt/cldt file, creates documents and stores retrieval information in the `ldtrecord`. This way, when a single record is requested, the plugin just gets the bytes without parsing the file.
 
 This works exactly the same if you store your binaries on S3 using [Nuxeop S3 Online Storage plugin](https://doc.nuxeo.com/nxdoc/amazon-s3-online-storage/), the plugin will directly read the `recordSize` bytes from the file on S3: No need to first download the file from S3 to local storage (typically an EBS column). This is extremely performant, because it makes no sense to download locally a 600MB file from S3 just to get 2KB from it. It would not scale : Imagine, 50 concurrent users asking their statement from 50. different big LDT files.
 
@@ -549,6 +550,15 @@ It is transparent. The only thing to do is add the `allowByteRange` property to 
   </blobprovider>
 </extension>
 ```
+
+## Compressing the LDT
+As explained above, it can be interesting to compress the source .ldt file. It is text, with a lot of spaces, and, so, has a very good compression rate.
+
+The plugin can compress the source LDT in a custom format that is simple: We extract each _record_ from the source LDT, compress them with GZIP, append the compressed bytes to a .cldt file (mime-type "application/cldt"), return the `startOffset` and `recordSize` (which is a _compressed_ `recordSize`). See `nuxeo.ldt.parser.service.CompressedLDT`.
+
+Once compressed, retrieval is transparent : The plugin gets the bytes directly from the .cldt file, uncompress them to a string, which can then be rendered (JSON, PDF, …)
+
+![Compressed LDT](doc-img/ldt-cldt-record.jpg)
 
 
 ## Build and run

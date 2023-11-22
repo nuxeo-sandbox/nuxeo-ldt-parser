@@ -54,7 +54,7 @@ import org.nuxeo.runtime.api.Framework;
  * All methods can throw an {@code IOException}
  * <br />
  * To extract a record from the compressed LDT, use the static {@code CompressedLDT#uncompress} method.
- * The optional {@code ldt.parser.uncompress.buffer} configuration parameter can be used to set the expand buffer, in bytes.
+ * The optional {@code ldt.parser.expand.buffer} configuration parameter can be used to set the expand buffer, in bytes.
  * Default and minimum is 4096
  * 
  * @since 2021
@@ -65,7 +65,7 @@ public class CompressedLDT {
 
     public static int MINIMUM_EXPAND_BUFFER = 4096;
 
-    public static final String EXPAND_BUFFER_CONFIGURATION_PARAM = "ldt.parser.uncompress.buffer";
+    public static final String EXPAND_BUFFER_CONFIGURATION_PARAM = "ldt.parser.expand.buffer";
 
     public static final String COMPRESSED_LDT_MIMETYPE = "application/cldt";
 
@@ -131,6 +131,7 @@ public class CompressedLDT {
             destinationBlob = Blobs.createBlobWithExtension("." + COMPRESSED_LDT_FILEXTENSTION);
             destinaTionRandomAccessFile = new RandomAccessFile(destinationBlob.getFile(), "rw");
         }
+        
         // 1. Read the text
         byte[] bytes = new byte[(int) recordSizeInLDT];
         ldtRandomAccessFile.read(bytes);
@@ -154,7 +155,7 @@ public class CompressedLDT {
 
     /**
      * To be called once parsing the source ldt is done.
-     * Closes all the internbal objects (streams/files) and returns the blob of the compressed ldt.
+     * Closes all the internal objects (streams/files) and returns the blob of the compressed ldt.
      * 
      * @return the blob of the compressed ldt
      * @throws IOException
