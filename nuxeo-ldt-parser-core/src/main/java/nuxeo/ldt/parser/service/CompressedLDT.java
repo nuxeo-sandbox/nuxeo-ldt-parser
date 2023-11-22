@@ -100,7 +100,7 @@ public class CompressedLDT {
             expandBuffer = MINIMUM_EXPAND_BUFFER;
 
             String expandBufferStr = Framework.getProperty(EXPAND_BUFFER_CONFIGURATION_PARAM);
-            if (StringUtils.isNoneBlank(expandBufferStr)) {
+            if (StringUtils.isNotBlank(expandBufferStr)) {
                 try {
                     int value = Integer.parseInt(expandBufferStr);
                     expandBuffer = value;
