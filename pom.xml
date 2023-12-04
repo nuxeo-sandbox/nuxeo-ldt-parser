@@ -19,7 +19,7 @@
     <nuxeo.skip.enforcer>true</nuxeo.skip.enforcer>
     <nuxeo.target.version>2021.*</nuxeo.target.version>
     <studio.project.version>0.0.0-SNAPSHOT</studio.project.version>
-    <skipDocker>false</skipDocker>
+    <skipDocker>true</skipDocker>
   </properties>
 
   <modules>
