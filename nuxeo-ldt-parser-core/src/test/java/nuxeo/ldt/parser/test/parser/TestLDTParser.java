@@ -46,7 +46,7 @@ import static org.junit.Assert.assertNull;
 
 import java.util.List;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 /**
  * We are testing with the "default" parser => see its XML for the fields used in the unit test.

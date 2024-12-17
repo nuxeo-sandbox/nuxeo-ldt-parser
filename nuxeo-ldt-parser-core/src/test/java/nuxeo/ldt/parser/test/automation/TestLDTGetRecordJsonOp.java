@@ -52,7 +52,7 @@ import nuxeo.ldt.parser.test.TestUtils;
 import nuxeo.ldt.parser.service.LDTParser;
 import nuxeo.ldt.parser.service.LDTParserService;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 /* See TestUtils comment for info aboout the test .LDT files
  * 

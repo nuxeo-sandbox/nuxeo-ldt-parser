@@ -37,7 +37,7 @@ import org.nuxeo.runtime.test.runner.FeaturesRunner;
 
 import nuxeo.ldt.parser.test.TestUtils;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import static org.junit.Assert.assertEquals;
 

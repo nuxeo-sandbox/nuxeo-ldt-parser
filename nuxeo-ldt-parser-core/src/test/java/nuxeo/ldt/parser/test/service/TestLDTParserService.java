@@ -14,7 +14,7 @@ import nuxeo.ldt.parser.service.LDTParser;
 import nuxeo.ldt.parser.service.LDTParserService;
 import nuxeo.ldt.parser.service.descriptors.LDTParserDescriptor;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 @RunWith(FeaturesRunner.class)
 @Features({ PlatformFeature.class })
