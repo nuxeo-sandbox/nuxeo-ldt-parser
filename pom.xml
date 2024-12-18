@@ -5,14 +5,12 @@
     <artifactId>nuxeo-parent</artifactId>
     <version>2025.0.102</version>
   </parent>
-
   <groupId>nuxeo.ldt.parser</groupId>
   <artifactId>nuxeo-ldt-parser-parent</artifactId>
   <version>2025.0.0-SNAPSHOT</version>
   <name>Nuxeo LDT Parser parent</name>
   <description/>
   <packaging>pom</packaging>
-
   <properties>
     <!-- Skip Nuxeo enforcer rules by default -->
     <nuxeo.skip.enforcer>true</nuxeo.skip.enforcer>
@@ -20,21 +18,22 @@
     <studio.project.version>0.0.0-SNAPSHOT</studio.project.version>
     <skipDocker>true</skipDocker>
   </properties>
-
   <modules>
     <module>nuxeo-ldt-parser-core</module>
     <module>nuxeo-ldt-parser-package</module>
     <module>nuxeo-ldt-parser-docker</module>
   </modules>
-
-  <scm/>
+  <scm>
+    <connection>scm:git:${project.scm.url}</connection>
+    <developerConnection>scm:git:${project.scm.url}</developerConnection>
+    <url>https://github.com/nuxeo-sandbox/nuxeo-ldt-parser</url>
+  </scm>
   <licenses/>
   <mailingLists/>
   <issueManagement/>
   <ciManagement/>
   <developers/>
   <distributionManagement/>
-
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -54,7 +53,6 @@
       </dependency>
     </dependencies>
   </dependencyManagement>
-
   <repositories>
     <repository>
       <id>maven-public</id>
@@ -90,7 +88,6 @@
       </snapshots>
     </repository>
   </repositories>
-
   <pluginRepositories>
     <pluginRepository>
       <id>maven-public</id>
@@ -103,4 +100,21 @@
       </snapshots>
     </pluginRepository>
   </pluginRepositories>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-release-plugin</artifactId>
+        <version>3.1.1</version>
+        <configuration>
+          <projectVersionPolicyId>SemVerVersionPolicy</projectVersionPolicyId>
+          <tagNameFormat>@{project.version}</tagNameFormat>
+          <autoVersionSubmodules>true</autoVersionSubmodules>
+          <scmReleaseCommitComment>Release @{releaseLabel}</scmReleaseCommitComment>
+          <scmDevelopmentCommitComment>Post Release @{releaseLabel}</scmDevelopmentCommitComment>
+          <pushChanges>false</pushChanges>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 </project>
