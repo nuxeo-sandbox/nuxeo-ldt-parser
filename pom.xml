@@ -17,6 +17,7 @@
     <nuxeo.target.version>2025.*</nuxeo.target.version>
     <studio.project.version>0.0.0-SNAPSHOT</studio.project.version>
     <skipDocker>true</skipDocker>
+    <pushReleaseChanges>false</pushReleaseChanges>
   </properties>
   <modules>
     <module>nuxeo-ldt-parser-core</module>
@@ -112,7 +113,15 @@
           <autoVersionSubmodules>true</autoVersionSubmodules>
           <scmReleaseCommitComment>Release @{releaseLabel}</scmReleaseCommitComment>
           <scmDevelopmentCommitComment>Post Release @{releaseLabel}</scmDevelopmentCommitComment>
-          <pushChanges>false</pushChanges>
+          <pushChanges>${pushReleaseChanges}</pushChanges>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>versions-maven-plugin</artifactId>
+        <version>2.18.0</version>
+        <configuration>
+          <ruleSet/>
         </configuration>
       </plugin>
     </plugins>
