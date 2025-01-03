@@ -5,7 +5,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
-import java.io.InputStream;
 import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -33,8 +32,6 @@ import org.nuxeo.runtime.test.runner.Features;
 import org.nuxeo.runtime.test.runner.FeaturesRunner;
 import org.nuxeo.runtime.test.runner.TransactionalFeature;
 
-import com.amazonaws.services.s3.model.S3ObjectInputStream;
-
 import nuxeo.ldt.parser.service.CompressedLDT;
 import nuxeo.ldt.parser.service.LDTParser;
 import nuxeo.ldt.parser.service.LDTParserService;
@@ -43,6 +40,9 @@ import nuxeo.ldt.parser.service.utils.LDTParserRecordStream;
 import nuxeo.ldt.parser.test.SimpleFeatureCustom;
 import nuxeo.ldt.parser.test.TestUtils;
 import nuxeo.ldt.parser.test.compression.TestCompressedLDT;
+
+import software.amazon.awssdk.core.ResponseInputStream;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 
 /**
  * The following environment variables *must* have been set prior to the unit tests:
@@ -157,8 +157,9 @@ public class TestLDTParserWithS3BinaryStore {
         long start = TestUtils.SIMPLELDT_RECORD2_STARTOFFSET;
         long end = TestUtils.SIMPLELDT_RECORD2_STARTOFFSET + TestUtils.SIMPLELDT_RECORD2_RECORDSIZE - 1;
         ByteRange range = ByteRange.inclusive(start, end);
-        S3ObjectInputStream stream = null;
-        stream = (S3ObjectInputStream) LDTParserRecordStream.getStreamWithByteRangeOnS3(resultBlob, range);
+
+        ResponseInputStream<GetObjectResponse> stream;
+        stream = (ResponseInputStream<GetObjectResponse>) LDTParserRecordStream.getStreamWithByteRangeOnS3(resultBlob, range);
         assertNotNull(stream);
 
         byte[] bytes = stream.readAllBytes();

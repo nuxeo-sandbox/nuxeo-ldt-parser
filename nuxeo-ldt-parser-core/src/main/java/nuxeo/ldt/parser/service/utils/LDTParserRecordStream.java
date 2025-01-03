@@ -33,10 +33,10 @@ import org.nuxeo.ecm.core.blob.ByteRange;
 import org.nuxeo.ecm.core.blob.ManagedBlob;
 import org.nuxeo.runtime.api.Framework;
 
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.GetObjectRequest;
-import com.amazonaws.services.s3.model.S3ObjectInputStream;
-import com.amazonaws.services.s3.transfer.TransferManager;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.transfer.s3.S3TransferManager;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3Client;
 
 /**
  * When reading a record inside an LDT File, we want to be able to get only the bytes we need.
@@ -95,7 +95,7 @@ public class LDTParserRecordStream {
      * @param range
      * @return
      * @throws IOException
-     * @since TODO
+     * @since 2021
      */
     public static InputStream getStream(Blob blob, ByteRange range) throws IOException {
 
@@ -149,6 +149,7 @@ public class LDTParserRecordStream {
      * WARNING
      * Assume S3 storage is set and all. We don't check that, you will get error if it is not
      * Also assume, of course, all access is already set (secret key etc.) in the configuration
+     * We do not handle versions.
      * 
      * @param blob
      * @param range
@@ -160,22 +161,22 @@ public class LDTParserRecordStream {
 
         ManagedBlob managedBlob = (ManagedBlob) blob;
         String key = managedBlob.getKey();
-        
+
         // We need to remove the provider prefix
-        if(key.startsWith(managedBlob.getProviderId() + ":")) {
+        if (key.startsWith(managedBlob.getProviderId() + ":")) {
             key = key.replace(managedBlob.getProviderId() + ":", "");
         }
+        String objectKey = GetS3Config.getBucketPrefix() + key;
 
-        String objectKey = GetS3Config.getBucketPrefix() + key;        
-        
-        // We do not handle versions.
-        GetObjectRequest getObjectRequest = new GetObjectRequest(GetS3Config.getBucket(), objectKey);
-        getObjectRequest.setRange(range.getStart(), range.getEnd());
+        String rangeHeader = "bytes=" + range.getStart() + "-" + range.getEnd();
+        GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                                                            .bucket(GetS3Config.getBucket())
+                                                            .key(objectKey)
+                                                            .range(rangeHeader)
+                                                            .build();
+        S3Client client = GetS3Config.getS3Client();
 
-        AmazonS3 s3 = GetS3Config.getTransferManager(blob).getAmazonS3Client();
-
-        S3ObjectInputStream stream = s3.getObject(getObjectRequest).getObjectContent();
-        return stream;
+        return client.getObject(getObjectRequest);
 
         /*
          * Blob tmpBlob = Blobs.createBlobWithExtension(".txt");
@@ -204,12 +205,14 @@ public class LDTParserRecordStream {
 
         protected static String bucketPrefix = null;
 
-        protected static TransferManager transferManager = null;
+        protected static S3TransferManager transferManager = null;
+
+        protected static S3Client s3Client = null;
 
         public static String getBucket() {
             if (bucket == null) {
                 bucket = Framework.getProperty("nuxeo.s3storage.bucket");
-                if(StringUtils.isBlank(bucket)) {
+                if (StringUtils.isBlank(bucket)) {
                     bucket = Framework.getProperty("nuxeo.test.s3storage.provider.test.bucket");
                 }
             }
@@ -217,7 +220,6 @@ public class LDTParserRecordStream {
         }
 
         public static String getBucketPrefix() {
-
             if (bucketPrefix == null) {
                 bucketPrefix = Framework.getProperty("nuxeo.s3storage.bucket_prefix");
                 if (StringUtils.isBlank(bucketPrefix)) {
@@ -231,13 +233,29 @@ public class LDTParserRecordStream {
             return bucketPrefix;
         }
 
-        public static TransferManager getTransferManager(Blob blob) {
+        public static S3Client getS3Client() {
+            if (s3Client == null) {
+                String region = Framework.getProperty("nuxeo.aws.region");
+                if (StringUtils.isBlank(region)) {
+                    region = System.getenv("AWS_REGION");
+                }
+                if (StringUtils.isBlank(region)) {
+                    region = Framework.getProperty("nuxeo.test.s3storage.region");
+                }
+                s3Client = S3Client.builder().region(Region.of(region)).build();
+            }
 
+            return s3Client;
+
+        }
+
+        public static S3TransferManager getTransferManager(Blob blob) {
             if (transferManager == null) {
                 ManagedBlob managedBlob = (ManagedBlob) blob;
 
                 BlobManager blobManager = Framework.getService(BlobManager.class);
-                S3BlobProvider s3BlobProvider = (S3BlobProvider) blobManager.getBlobProvider(managedBlob.getProviderId());
+                S3BlobProvider s3BlobProvider = (S3BlobProvider) blobManager.getBlobProvider(
+                        managedBlob.getProviderId());
                 transferManager = s3BlobProvider.getTransferManager();
             }
 

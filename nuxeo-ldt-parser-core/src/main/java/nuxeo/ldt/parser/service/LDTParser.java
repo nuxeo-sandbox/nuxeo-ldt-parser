@@ -431,11 +431,11 @@ public class LDTParser {
                 LineIterator it = new LineIterator(reader)) {
 
             // Go to start of record
-            String line = it.nextLine();
+            String line = it.next();
             if (!isRecordStart(line)) {
                 boolean found = false;
                 while (it.hasNext()) {
-                    line = it.nextLine();
+                    line = it.next();
                     if (isRecordStart(line)) {
                         found = true;
                         break;
@@ -462,7 +462,7 @@ public class LDTParser {
             rawRecord.add(line);
             int lineNumber = 1;
             do {
-                line = it.nextLine();
+                line = it.next();
                 rawRecord.add(line);
 
                 lineNumber += 1;
@@ -478,13 +478,13 @@ public class LDTParser {
             // ==================================================
             boolean reachedEnd = false;
             while (!reachedEnd && it.hasNext()) {
-                String item = it.nextLine();
+                String item = it.next();
                 if (isRecordStart(item)) {
                     // We have a header. Need to ignore all headers
                     // We don't check hasNext(): as long as we have not reached
                     // the recordEnd token, we *must* have a line
                     do {
-                        item = it.nextLine();
+                        item = it.next();
                     } while (parseRecordHeader(line, 0) != null);
                 }
                 // We have an item
@@ -559,7 +559,7 @@ public class LDTParser {
         long recordStart = totalBytesRead;
         long lineStart = lineCount;
 
-        String line = it.nextLine();
+        String line = it.next();
         if (!isRecordStart(line)) {
             throw new NuxeoException("Line should be a Record-Start, and starts with '" + recordStartToken + "'");
         }
@@ -580,7 +580,7 @@ public class LDTParser {
 
         // Assume we have no more than 100 header lines...
         for (int lineNumber = 1; lineNumber < 100; lineNumber++) {
-            line = it.nextLine();
+            line = it.next();
             lineCount += 1;
             totalBytesRead += line.length() + lengthOfEOF;
             header = parseRecordHeader(line, lineNumber);
@@ -593,7 +593,7 @@ public class LDTParser {
         // We catched the first itemLine above, but it's ok, there will be at least one item.
 
         while (it.hasNext()) {
-            String moreLine = it.nextLine();
+            String moreLine = it.next();
             lineCount += 1;
             // utf8Bytes = moreLine.getBytes("UTF-8");
             // totalBytesRead += utf8Bytes.length + lengthOfEOF;

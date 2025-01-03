@@ -11,6 +11,7 @@ import org.nuxeo.runtime.api.Framework;
 import org.nuxeo.runtime.test.runner.Deploy;
 import org.nuxeo.runtime.test.runner.FeaturesRunner;
 
+import org.junit.runners.model.FrameworkMethod;
 /**
  * =======================================================================
  * <b>WARNING</b>
@@ -36,7 +37,7 @@ import org.nuxeo.runtime.test.runner.FeaturesRunner;
  * Also, we declare thhe same "test" S3 BlobProvider, forcing "nocache" (this contribution plus the one from
  * S3BlobProviderFeature are merged) to make sure we use S3 and the GetObjectRequest().withRange().
  * 
- * @since TODO
+ * @since 2021
  */
 @Deploy("org.nuxeo.runtime.aws")
 public class SimpleFeatureCustom extends S3BlobProviderFeature {
@@ -52,6 +53,15 @@ public class SimpleFeatureCustom extends S3BlobProviderFeature {
         tempMap.put("nuxeo.test.s3storage.provider.test.bucket", "TEST_BUCKET");
         tempMap.put("nuxeo.test.s3storage.provider.test.bucket_prefix", "TEST_BUCKET_PREFIX");
         ENV_VARIABLES = Collections.unmodifiableMap(tempMap);
+    }
+    
+    @Override
+    public void beforeSetup(FeaturesRunner runner, FrameworkMethod method, Object test) {
+        String toto = null;
+        if(toto == null) {
+            
+        }
+        super.beforeSetup(runner, method, test);
     }
 
     @Override

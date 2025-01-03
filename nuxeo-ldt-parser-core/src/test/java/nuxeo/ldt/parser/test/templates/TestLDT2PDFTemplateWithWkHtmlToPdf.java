@@ -20,6 +20,7 @@
 package nuxeo.ldt.parser.test.templates;
 
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.nuxeo.common.utils.FileUtils;
@@ -71,8 +72,8 @@ public class TestLDT2PDFTemplateWithWkHtmlToPdf {
     public void testRenderTemplate() throws Exception {
         
         boolean available = commandLineExecutorService.getCommandAvailability("wkhtmlToPdf").isAvailable();
-        assertTrue(available);
-        
+        Assume.assumeTrue("wkhtmlToPdf not installed. Not doing the test", available);
+                
         available = conversionService.isConverterAvailable("html2pdfWithWKHtmlToPdf").isAvailable();
         assertTrue(available);
         
