@@ -12,6 +12,8 @@
 
                   var json = JSON.parse(input.getString());
                   
+                  Console.log("test_render_pdf_with_any2pdf...");
+                  
                   // Make sure items are ordered
                   json.record.items.sort(function(a, b) {
                     return a.order - b.order;
@@ -42,19 +44,23 @@
 
                   var dummyDoc = Session.createDocumentModel("/","File","File");
 
+				  Console.log("  Render.Document...");
                   var html = Render.Document(dummyDoc,{
                     template: "template:BankStatementTemplate",
                     filename: "record.html",
                     mimetype: "text/html",
                     type: "ftl"
                   });
+                  Console.log("  Render.Document......DONE.");
 //Console.log("================================================");
                   //Console.log(html.getString());
 //Console.log("================================================");
 
-                  return Blob.RunConverter(html, {
-                    'converter': 'any2pdf'
-                  });
+                  var pdf = Blob.RunConverter(html, {'converter': 'any2pdf'});
+                  
+                  Console.log("  pdf:" + (pdf === null ? "NULL" : " OK, name: " + pdf.filename));
+                  
+                  return pdf;
              }]]>
             </script>
         </scriptedOperation>
