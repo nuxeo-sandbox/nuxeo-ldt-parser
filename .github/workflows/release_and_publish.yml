@@ -38,7 +38,7 @@ jobs:
           ]
 
     - name: Install OS dependencies
-      run: sudo apt-get -y install ffmpeg exiftool
+      run: sudo apt-get -y install ffmpeg exiftool libreoffice-core-nogui
 
     - name: Set up Git configuration
       run: |
