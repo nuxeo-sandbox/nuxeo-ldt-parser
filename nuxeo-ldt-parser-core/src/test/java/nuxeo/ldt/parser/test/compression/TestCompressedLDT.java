@@ -62,13 +62,13 @@ import javax.inject.Inject;
 public class TestCompressedLDT {
 
     /*
-     * The test file is test-bigger.ldt.
+     * The test file is test-bigger.LDT.
      * This file contains copy/paste of the simple test.ldt, so the same 3 records are
      * repeated n times, but it's OK in the a unit test.
      * The corresponding compressed ldt is test-bigger.cldt
      * WARNING: If you change the compression algorythm, change this test file.
      */
-    public static final String BIGGER_LDT = "test-bigger.ldt";
+    public static final String BIGGER_LDT = "test-bigger.LDT";
 
     public static final int BIGGER_LDT_COUNT_RECORDS = 648;
 
