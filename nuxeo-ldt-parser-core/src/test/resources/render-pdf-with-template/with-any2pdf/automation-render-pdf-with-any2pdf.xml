@@ -53,7 +53,7 @@
                   });
                   Console.log("  Render.Document......DONE.");
 //Console.log("================================================");
-                  Console.log("Result HTML:\n" + html.getString());
+                  Console.log("  Result HTML size:" + html.getLength());
 //Console.log("================================================");
 
                   var pdf = Blob.RunConverter(html, {'converter': 'any2pdf'});
