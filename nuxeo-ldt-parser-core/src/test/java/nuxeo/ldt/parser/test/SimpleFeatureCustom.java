@@ -11,7 +11,6 @@ import org.nuxeo.runtime.api.Framework;
 import org.nuxeo.runtime.test.runner.Deploy;
 import org.nuxeo.runtime.test.runner.FeaturesRunner;
 
-import org.junit.runners.model.FrameworkMethod;
 /**
  * =======================================================================
  * <b>WARNING</b>
@@ -55,15 +54,6 @@ public class SimpleFeatureCustom extends S3BlobProviderFeature {
         ENV_VARIABLES = Collections.unmodifiableMap(tempMap);
     }
     
-    @Override
-    public void beforeSetup(FeaturesRunner runner, FrameworkMethod method, Object test) {
-        String toto = null;
-        if(toto == null) {
-            
-        }
-        super.beforeSetup(runner, method, test);
-    }
-
     @Override
     public void start(FeaturesRunner runner) {
 
