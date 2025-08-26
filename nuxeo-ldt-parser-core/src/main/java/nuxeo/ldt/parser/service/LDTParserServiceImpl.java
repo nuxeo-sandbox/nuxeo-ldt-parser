@@ -41,20 +41,6 @@ public class LDTParserServiceImpl extends DefaultComponent implements LDTParserS
         super.deactivate(context);
     }
 
-    /**
-     * Application started notification.
-     * Called after the application started.
-     * You can do here any initialization that requires a working application
-     * (all resolved bundles and components are active at that moment)
-     *
-     * @param context the component context. Use it to get the current bundle context
-     * @throws Exception
-     */
-    @Override
-    public void applicationStarted(ComponentContext context) {
-        // do nothing by default. You can remove this method if not used.
-    }
-
     @Override
     public void registerExtension(Extension extension) {
         super.registerExtension(extension);
